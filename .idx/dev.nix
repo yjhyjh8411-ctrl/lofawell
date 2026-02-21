@@ -28,7 +28,8 @@
         displayName = "Web Server";
         # Command to run to start the server. This command first installs dependencies and then runs the app.
         command = [
-          "bash",
+          "bash"
+          ,
           "-c",
           "python3 -m pip install -r lofawell/requirements.txt && pm2-runtime start lofawell/app.py --name lofawell --interpreter python3 --watch"
         ];

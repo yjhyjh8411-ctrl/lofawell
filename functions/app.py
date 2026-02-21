@@ -7,6 +7,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
+from PIL import Image
 
 app = Flask(__name__)
 CORS(app) # Enable CORS for all routes
@@ -67,34 +68,68 @@ def get_bucket():
 
 # --- [유틸리티 함수] ---
 def upload_file_to_storage(file, user_id, user_name, apply_type):
-    """Firebase Storage에 파일을 업로드하고 다운로드 URL을 반환합니다."""
+    """Firebase Storage에 파일을 업로드하고 다운로드 URL을 반환합니다. 
+    이미지 파일인 경우 자동으로 크기를 줄여서 업로드합니다."""
     if not file or file.filename == '':
         return ""
     
     try:
         now_date = datetime.now().strftime('%Y%m%d_%H%M%S')
         original_name = secure_filename(file.filename)
-        filename = f"{user_id}_{user_name}_{apply_type}_{now_date}_{original_name}"
+        ext = os.path.splitext(original_name)[1].lower()
+        filename = f"{user_id}_{user_name}_{apply_type or 'unknown'}_{now_date}_{original_name}"
         
         bucket = get_bucket()
-        blob = bucket.blob(f"uploads/{filename}")
         
-        # 파일 업로드 (메모리에서 스트림 읽기)
+        # 파일 읽기
         file_content = file.read()
-        blob.upload_from_string(file_content, content_type=file.content_type)
+        content_type = file.content_type or 'application/octet-stream'
+
+        # 이미지 압축 처리 (JPG, JPEG, PNG, WEBP 등)
+        if ext in ['.jpg', '.jpeg', '.png', '.webp']:
+            try:
+                img = Image.open(io.BytesIO(file_content))
+                
+                # 이미지 모드 확인 및 변환 (RGBA -> RGB 등)
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                
+                # 이미지 크기 조정 (최대 너비/높이 1600px로 제한)
+                max_size = 1600
+                if img.width > max_size or img.height > max_size:
+                    img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                
+                # 압축된 이미지를 메모리 버퍼에 저장
+                img_io = io.BytesIO()
+                img.save(img_io, format='JPEG', quality=80, optimize=True)
+                file_content = img_io.getvalue()
+                content_type = 'image/jpeg'
+                
+                # 확장자가 바뀌었으므로 파일명도 .jpg로 조정
+                if not filename.lower().endswith('.jpg') and not filename.lower().endswith('.jpeg'):
+                    filename = os.path.splitext(filename)[0] + '.jpg'
+            except Exception as img_err:
+                print(f"Image compression failed, using original: {img_err}")
         
-        # 파일을 공개적으로 읽을 수 있도록 설정
-        try:
-            blob.make_public()
-            public_url = blob.public_url
-        except Exception as e:
-            print(f"Make public failed, using token fallback: {e}")
-            # Fallback to signed URL or token based URL if make_public fails
-            access_token = str(uuid.uuid4())
-            blob.metadata = {"firebaseStorageDownloadTokens": access_token}
-            blob.patch()
-            encoded_name = urllib.parse.quote(f"uploads/{filename}", safe='')
-            public_url = f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/{encoded_name}?alt=media&token={access_token}"
+        # Firebase Storage용 다운로드 토큰 생성 (가장 확실한 다운로드 방법)
+        access_token = str(uuid.uuid4())
+        
+        blob = bucket.blob(f"uploads/{filename}")
+        blob.metadata = {"firebaseStorageDownloadTokens": access_token}
+        
+        # 파일 업로드
+        blob.upload_from_string(file_content, content_type=content_type)
+        
+        # 메타데이터 업데이트 (토큰 적용)
+        blob.patch()
+        
+        # 브라우저에서 바로 다운로드되도록 Content-Disposition 설정 (선택 사항)
+        # blob.content_disposition = f'attachment; filename="{original_name}"'
+        # blob.patch()
+
+        # Firebase Storage 표준 다운로드 URL 형식 생성
+        encoded_name = urllib.parse.quote(f"uploads/{filename}", safe='')
+        public_url = f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/{encoded_name}?alt=media&token={access_token}"
         
         return public_url
     except Exception as e:
@@ -209,16 +244,28 @@ def handle_submit():
     try:
         user_id = str(session.get('user_id'))
         user_name = str(session.get('user_name'))
-        apply_type = request.form.get('type')
+        apply_type = request.form.get('type', '일반신청')
         
+        print(f"Form Data: {request.form}")
+        print(f"Files: {request.files}")
+
         file = request.files.get('attachment')
         file_url = request.form.get('old_filename', '')
         
         if file and file.filename != '':
             file_url = upload_file_to_storage(file, user_id, user_name, apply_type)
 
+        # 모든 폼 데이터를 딕셔너리로 수집
+        form_data_all = {}
+        for key in request.form.keys():
+            if key not in ['app_id', 'old_filename', 'type']:
+                form_data_all[key] = request.form.get(key)
+
         amount_raw = str(request.form.get('amount', '0')).replace(',', '')
-        amount_val = int(float(amount_raw)) if amount_raw.replace('.', '', 1).isdigit() else 0
+        try:
+            amount_val = int(float(amount_raw))
+        except (ValueError, TypeError):
+            amount_val = 0
         
         detail_parts = [
             f"항목:{request.form.get('item_name', '')}",
@@ -228,6 +275,8 @@ def handle_submit():
             f"내용:{request.form.get('detail_text', '')}"
         ]
         clean_detail = " / ".join(p for p in detail_parts if not p.endswith(':') and not p.endswith(':0'))
+        if not clean_detail:
+            clean_detail = request.form.get('detail_text', '')
 
         app_id = request.form.get('app_id')
         if not app_id or app_id == 'None':
@@ -252,7 +301,8 @@ def handle_submit():
             '상태': '대기',
             '반려의견': '',
             '대상자성명': request.form.get('target_name', ''),
-            '첨부파일': file_url
+            '첨부파일': file_url,
+            'raw_data': form_data_all  # 모든 원본 필드 저장
         }
 
         db = get_db()
@@ -367,6 +417,9 @@ def admin_dashboard():
             summary[user_key]['사번'] = app_item['사번']
             summary[user_key]['성명'] = app_item['성명']
             summary[user_key]['부서'] = app_item.get('부서', '-')
+            summary[user_key]['직급'] = app_item.get('직급', '-')
+            summary[user_key]['입사일'] = app_item.get('입사일', '-')
+            summary[user_key]['전화번호'] = app_item.get('전화번호', '-')
         
         cat = app_item['구분']
         if cat in cats:
@@ -375,6 +428,7 @@ def admin_dashboard():
                 'amount': format(app_item.get('신청금액', 0), ','),
                 'status': status,
                 'apply_date': app_item['신청일시'],
+                'attachment': app_item.get('첨부파일', ''), # summary에 명시적 포함
                 'detail': app_item
             })
 
@@ -400,7 +454,7 @@ def admin_process():
     })
     return jsonify({"status": "success"})
 
-# --- [엑셀 다운로드 기능 추가] ---
+# --- [엑셀 다운로드 기능 개선] ---
 @app.route('/download_excel')
 def download_excel():
     if session.get('user_id') != 'admin': return redirect(url_for('index'))
@@ -409,23 +463,53 @@ def download_excel():
         import pandas as pd
         db = get_db()
         docs = db.collection('applications').stream()
-        all_apps = [doc.to_dict() for doc in docs]
+        all_apps = []
+        for doc in docs:
+            d = doc.to_dict()
+            # 원본 데이터(raw_data)가 있으면 그것을 기반으로 정리
+            row = {
+                'ID': d.get('app_id'),
+                '신청일시': d.get('신청일시'),
+                '구분': d.get('구분'),
+                '사번': d.get('사번'),
+                '성명': d.get('성명'),
+                '부서': d.get('부서'),
+                '직급': d.get('직급'),
+                '입사일': d.get('입사일'),
+                '전화번호': d.get('전화번호'),
+                '신청금액': d.get('신청금액'),
+                '계좌번호': d.get('계좌번호'),
+                '상태': d.get('상태'),
+                '반려의견': d.get('반려의견'),
+                '첨부파일': d.get('첨부파일')
+            }
+            # raw_data에 있는 추가 필드들도 병합 (중복 제외)
+            if 'raw_data' in d and isinstance(d['raw_data'], dict):
+                for k, v in d['raw_data'].items():
+                    if k not in ['user_name', 'user_id', 'user_dept', 'position', 'joinDate', 'phone', 'amount', 'account', 'type']:
+                        row[f"상세_{k}"] = v
+            all_apps.append(row)
         
         if not all_apps:
             return "데이터가 없습니다."
 
         df = pd.DataFrame(all_apps)
         
+        # 컬럼 순서 조정 (주요 정보 우선)
+        main_cols = ['사번', '성명', '구분', '신청금액', '상태', '신청일시', '부서', '직급', '입사일', '전화번호', '계좌번호']
+        cols = [c for c in main_cols if c in df.columns] + [c for c in df.columns if c not in main_cols]
+        df = df[cols]
+        
         # 엑셀 파일 생성 (메모리상에서)
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Applications')
+            df.to_excel(writer, index=False, sheet_name='복지신청내역')
         output.seek(0)
         
         return send_file(
             output,
             as_attachment=True,
-            download_name=f"applications_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            download_name=f"LOFA_applications_{datetime.now().strftime('%Y%m%d')}.xlsx",
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
     except Exception as e:

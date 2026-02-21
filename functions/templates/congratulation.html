@@ -125,16 +125,21 @@
 
         try {
             const res = await fetch('/submit', { method: 'POST', body: formData });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
+            }
             const result = await res.json();
             
             if(result.status === 'success') {
-                alert(result.message || '경조비 신청이 완료되었습니다.');
+                alert(result.message || '처리가 완료되었습니다.');
                 window.location.href = '/my_status';
             } else {
                 alert('오류 발생: ' + result.message);
             }
         } catch (err) {
-            alert('서버와 통신 중 오류가 발생했습니다.');
+            console.error('Submission error:', err);
+            alert('제출 중 오류가 발생했습니다: ' + err.message);
         }
     };
 </script>

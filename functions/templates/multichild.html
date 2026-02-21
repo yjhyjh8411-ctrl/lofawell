@@ -19,12 +19,12 @@
 <div class="container">
     <div class="form-card shadow">
         <div class="header-line">
-            <h2 class="fw-bold">{% if data %} 👶 다자녀 지원 신청 수정 {% else %} 👶 다자녀 보육 지원 신청서 {% endif %}</h2>
+            <h2 class="fw-bold">{% if data and data.app_id %} 👶 다자녀 지원 신청 수정 {% else %} 👶 다자녀 보육 지원 신청서 {% endif %}</h2>
             <p class="text-muted mb-0">다자녀 가구 임직원을 위한 보육 및 교육 지원 신청 양식입니다.</p>
         </div>
 
         <form id="multiChildForm" enctype="multipart/form-data">
-            <input type="hidden" name="app_id" value="{{ data.app_id if data else '' }}">
+            <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
             <input type="hidden" name="type" value="다자녀가정지원">
 
             <div class="section-title">1. 신청인 정보</div>
@@ -93,7 +93,7 @@
 
             <div class="d-grid gap-2 mt-5">
                 <button type="submit" class="btn btn-lg text-white shadow fw-bold" style="background-color: #6c5ce7;">
-                    {% if data and data.app_id %} <i class="bi bi-pencil-square"></i> 다자녀 지원 수정 완료 {% else %} <i class="bi bi-send-fill"></i> 신청서 제출 {% endif %}
+                    {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 다자녀 지원 수정 완료 {% else %} <i class="bi bi-send-fill"></i> 신청서 제출 {% endif %}
                 </button>
                 <a href="/my_status" class="btn btn-outline-secondary">목록으로 돌아가기</a>
             </div>
@@ -103,7 +103,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// 자녀 입력칸 추가 함수
 function addChildItem(name='', birth='', note='') {
     const container = document.getElementById('childList');
     const newItem = document.createElement('div');
@@ -113,13 +112,12 @@ function addChildItem(name='', birth='', note='') {
         <div class="row g-2">
             <div class="col-md-4"><label class="small text-muted">자녀 성명</label><input type="text" class="form-control form-control-sm c_name" value="${name}" placeholder="성명" required></div>
             <div class="col-md-4"><label class="small text-muted">생년월일</label><input type="date" class="form-control form-control-sm c_birth" value="${birth}" required></div>
-            <div class="col-md-4"><label class="small text-muted">비고(취학예정일 등)</label><input type="text" class="form-control form-control-sm c_note" value="${note}" placeholder="비고"></div>
+            <div class="col-md-4"><label class="small text-muted">비고</label><input type="text" class="form-control form-control-sm c_note" value="${note}" placeholder="비고"></div>
         </div>
     `;
     container.appendChild(newItem);
 }
 
-// 페이지 로드 시 데이터 복원
 window.onload = function() {
     const savedDetail = "{{ data.세부내용 if data else '' }}";
     if (savedDetail) {
@@ -133,11 +131,10 @@ window.onload = function() {
     }
 };
 
-// 폼 제출 로직 수정
 document.getElementById('multiChildForm').onsubmit = async (e) => {
     e.preventDefault();
+    const formData = new FormData(e.target);
     
-    // 1. 자녀 정보 수집 및 텍스트화
     let childDetails = [];
     const childRows = document.querySelectorAll('.child-item');
     childRows.forEach(item => {
@@ -146,31 +143,26 @@ document.getElementById('multiChildForm').onsubmit = async (e) => {
         const note = item.querySelector('.c_note').value;
         if(name) childDetails.push(`${name}|${birth}|${note}`);
     });
-
-    const formData = new FormData(e.target);
-    
-    // 2. 세부내용 합치기
     formData.append('detail_text', childDetails.join('||'));
-    
-    // 3. 대상자성명 칸에 자녀 수 기록 (UI에서 에러나던 부분 수정) 
     formData.append('target_name', childRows.length + "명");
 
     try {
-        const res = await fetch('/submit', { 
-            method: 'POST', 
-            body: formData  // 💡 파일을 포함한 FormData 전송
-        });
+        const res = await fetch('/submit', { method: 'POST', body: formData });
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
+        }
         const result = await res.json();
         
         if(result.status === 'success') {
             alert(result.message || '다자녀 지원 신청이 완료되었습니다.');
             window.location.href = '/my_status';
         } else {
-            alert('오류: ' + result.message);
+            alert('오류 발생: ' + result.message);
         }
     } catch (err) {
-        console.error(err);
-        alert('서버 통신 오류가 발생했습니다.');
+        console.error('Submission error:', err);
+        alert('제출 중 오류가 발생했습니다: ' + err.message);
     }
 };
 </script>

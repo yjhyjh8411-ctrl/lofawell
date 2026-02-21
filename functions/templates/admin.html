@@ -132,12 +132,12 @@
         <!-- 3. 전체 매트릭스 뷰 -->
         <div class="col-lg-8">
             <div class="matrix-container shadow-sm m-0">
-                <h6 class="fw-bold mb-3"><i class="bi bi-table"></i> 직원별 복지 신청 전체 내역</h6>
+                <h6 class="fw-bold mb-3"><i class="bi bi-table"></i> 직원별 복지 신청 전체 내역 (사번/성명/직급/연락처 포함)</h6>
                 <div class="table-responsive">
                     <table class="table table-matrix" id="adminTable">
                         <thead>
                             <tr>
-                                <th>직원 정보</th>
+                                <th style="min-width: 180px;">직원 상세 정보</th>
                                 {% for cat in categories %}
                                 <th style="min-width: 100px;">{{ cat[:2] }}..</th>
                                 {% endfor %}
@@ -146,16 +146,25 @@
                         <tbody>
                             {% for row in summary %}
                             <tr class="user-row">
-                                <td class="bg-light">
-                                    <div class="fw-bold name-cell">{{ row.성명 }}</div>
-                                    <div class="small text-muted id-cell">{{ row.사번 }}</div>
-                                    <div class="small" style="font-size: 10px;">{{ row.부서 }}</div>
+                                <td class="bg-light p-2">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <span class="fw-bold name-cell" style="font-size: 14px;">{{ row.성명 }}</span>
+                                        <span class="badge bg-secondary id-cell" style="font-size: 10px;">{{ row.사번 }}</span>
+                                    </div>
+                                    <div class="dept-cell small text-dark mb-1" style="font-size: 11px;">
+                                        <i class="bi bi-building"></i> {{ row.부서 }} / {{ row.직급 }}
+                                    </div>
+                                    <div class="info-cell text-muted" style="font-size: 10px;">
+                                        <div><i class="bi bi-telephone"></i> {{ row.전화번호 }}</div>
+                                        <div><i class="bi bi-calendar-check"></i> 입사: {{ row.입사일 }}</div>
+                                    </div>
                                 </td>
                                 {% for cat in categories %}
                                 <td>
                                     {% for item in row[cat] %}
                                     <div class="app-dot dot-{{ item.status }}" 
-                                         onclick='showAppDetail({{ item.detail | tojson | safe }})'>
+                                         onclick='showAppDetail({{ item.detail | tojson | safe }})'
+                                         title="{{ item.apply_date }}">
                                         {{ item.amount }}
                                     </div>
                                     {% endfor %}
@@ -198,30 +207,58 @@
         currentApp = data;
         const displayAmount = Number(data.신청금액).toLocaleString();
         
-        let fileBtn = data.첨부파일 ? 
-            `<a href="${data.첨부파일}" target="_blank" class="btn btn-sm btn-outline-primary">
+        // 첨부파일 필드 찾기 (다양한 필드명 호환성 유지)
+        const fileUrl = data.첨부파일 || data.file_url || data.attachment || "";
+        
+        let fileBtn = fileUrl ? 
+            `<a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-file-earmark-arrow-down"></i> 첨부파일 보기
              </a>` : `<span class="badge bg-light text-dark">첨부파일 없음</span>`;
 
         let content = `
             <div class="row g-4">
                 <div class="col-md-6">
-                    <div class="mb-3"><label class="text-muted small d-block">신청 종류</label><span class="fw-bold fs-5">${data.구분}</span></div>
+                    <div class="mb-3"><label class="text-muted small d-block">신청 종류</label><span class="fw-bold fs-5 text-primary">${data.구분}</span></div>
                     <div class="mb-3"><label class="text-muted small d-block">신청인</label><span class="fw-bold">${data.성명} (${data.사번})</span></div>
                     <div class="mb-3"><label class="text-muted small d-block">부서 / 직급</label><span>${data.부서} / ${data.직급}</span></div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3"><label class="text-muted small d-block">신청 일시</label><span>${data.신청일시}</span></div>
-                    <div class="mb-3"><label class="text-muted small d-block">신청 금액</label><span class="text-primary fw-bold fs-5">${displayAmount}원</span></div>
+                    <div class="mb-3"><label class="text-muted small d-block">신청 금액</label><span class="text-danger fw-bold fs-5">${displayAmount}원</span></div>
                     <div class="mb-3"><label class="text-muted small d-block">계좌 정보</label><span>${data.계좌번호}</span></div>
                 </div>
+                <div class="col-12"><hr class="my-0"></div>
                 <div class="col-12">
-                    <div class="p-3 bg-light rounded" style="min-height: 100px;">
-                        <label class="text-muted small d-block mb-2">세부 내용</label>
-                        <div style="white-space: pre-wrap;">${data.세부내용}</div>
+                    <label class="fw-bold mb-2"><i class="bi bi-list-check"></i> 신청서 입력값 전체</label>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered bg-light mb-0" style="font-size: 0.85rem;">
+                            <tbody>`;
+
+        if (data.raw_data) {
+            const fieldMap = {
+                'user_name': '성명', 'user_id': '사번', 'user_dept': '부서', 'position': '직급',
+                'joinDate': '입사일', 'phone': '연락처', 'amount': '신청금액', 'account': '계좌번호',
+                'target_name': '지원대상/구분', 'item_name': '항목명', 'bank_name': '은행명',
+                'self_pay': '본인부담금', 'detail_text': '상세내역/명세', 'type': '신청유형'
+            };
+
+            Object.entries(data.raw_data).forEach(([key, val]) => {
+                if (!val || val === 'undefined' || val === 'None') return;
+                const label = fieldMap[key] || key;
+                content += `<tr><th class="text-muted w-25 bg-white">${label}</th><td>${val}</td></tr>`;
+            });
+        } else {
+            content += `<tr><td colspan="2" style="white-space: pre-wrap;">${data.세부내용}</td></tr>`;
+        }
+
+        content += `        </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="col-12">
+                    <div class="mb-2"><label class="text-muted small d-block">연락처 및 기타 정보</label>
+                        <span class="small">사번: ${data.사번} | 입사일: ${data.입사일} | 전화: ${data.전화번호}</span>
+                    </div>
                     <label class="text-muted small d-block mb-2">증빙 서류</label>
                     ${fileBtn}
                 </div>
@@ -282,7 +319,8 @@
         rows.forEach(row => {
             const name = row.querySelector('.name-cell').innerText.toLowerCase();
             const id = row.querySelector('.id-cell').innerText.toLowerCase();
-            if (name.includes(input) || id.includes(input)) {
+            const dept = row.querySelector('.dept-cell').innerText.toLowerCase();
+            if (name.includes(input) || id.includes(input) || dept.includes(input)) {
                 row.style.display = "";
             } else {
                 row.style.display = "none";

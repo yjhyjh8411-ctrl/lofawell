@@ -95,12 +95,14 @@
 <script>
     document.getElementById('inspectionForm').onsubmit = async (e) => {
         e.preventDefault();
-        
-        // 💡 FormData를 통해 텍스트와 파일을 한꺼번에 서버로 보냅니다.
         const formData = new FormData(e.target);
 
         try {
             const res = await fetch('/submit', { method: 'POST', body: formData });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
+            }
             const result = await res.json();
             
             if(result.status === 'success') {
@@ -110,8 +112,8 @@
                 alert('오류 발생: ' + result.message);
             }
         } catch (err) {
-            console.error(err);
-            alert('서버와 통신하는 중 오류가 발생했습니다.');
+            console.error('Submission error:', err);
+            alert('제출 중 오류가 발생했습니다: ' + err.message);
         }
     };
 </script>

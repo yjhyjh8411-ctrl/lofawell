@@ -18,12 +18,12 @@
 <div class="container">
     <div class="form-card shadow">
         <div class="header-line">
-            <h2 class="fw-bold">{% if edit_mode %} 🤰 모성보호 지원 수정 {% else %} 🤰 모성보호 지원 신청서 {% endif %}</h2>
+            <h2 class="fw-bold">{% if data and data.app_id %} 🤰 모성보호 지원 수정 {% else %} 🤰 모성보호 지원 신청서 {% endif %}</h2>
             <p class="text-muted mb-0">임신 및 난임 치료 지원을 위한 임직원 전용 신청 양식입니다.</p>
         </div>
 
         <form id="maternityForm" enctype="multipart/form-data">
-            <input type="hidden" name="app_id" value="{{ data.app_id if edit_mode else '' }}">
+            <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
             <input type="hidden" name="type" value="모성보호지원">
 
             <div class="section-title">1. 신청인 정보</div>
@@ -79,7 +79,7 @@
                 <div class="col-12 mt-3">
                     <label class="form-label fw-bold small"><i class="bi bi-paperclip"></i> 증빙서류 첨부 (임신확인서, 난임진단서 등)</label>
                     <input type="file" name="attachment" class="form-control">
-                    {% if edit_mode and data.첨부파일 %}
+                    {% if data and data.첨부파일 %}
                     <div class="mt-2 small text-muted">기존 파일: <span class="text-pink fw-bold" style="color:#fd79a8;">{{ data.첨부파일 }}</span></div>
                     {% endif %}
                 </div>
@@ -100,7 +100,7 @@
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-lg text-white shadow fw-bold" style="background-color: #fd79a8;">
-                    {% if edit_mode %} <i class="bi bi-check2-circle"></i> 모성보호 수정 완료 {% else %} <i class="bi bi-send-fill"></i> 모성보호 지원 신청 {% endif %}
+                    {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 모성보호 수정 완료 {% else %} <i class="bi bi-send-fill"></i> 모성보호 지원 신청 {% endif %}
                 </button>
                 <a href="/my_status" class="btn btn-outline-secondary">취소하고 돌아가기</a>
             </div>
@@ -110,29 +110,29 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.getElementById('maternityForm').onsubmit = async (e) => {
-    e.preventDefault();
-    
-    // FormData 객체가 텍스트와 파일을 한꺼번에 담습니다.
-    const formData = new FormData(e.target);
+    document.getElementById('maternityForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
 
-    try {
-        const res = await fetch('/submit', { 
-            method: 'POST', 
-            body: formData 
-        });
-        const result = await res.json();
-        
-        if(result.status === 'success') {
-            alert(result.message || '모성보호 지원 신청이 정상적으로 접수되었습니다.');
-            window.location.href = '/my_status';
-        } else {
-            alert('오류 발생: ' + result.message);
+        try {
+            const res = await fetch('/submit', { method: 'POST', body: formData });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
+            }
+            const result = await res.json();
+            
+            if(result.status === 'success') {
+                alert(result.message || '모성보호 지원 신청이 완료되었습니다.');
+                window.location.href = '/my_status';
+            } else {
+                alert('오류 발생: ' + result.message);
+            }
+        } catch (err) {
+            console.error('Submission error:', err);
+            alert('제출 중 오류가 발생했습니다: ' + err.message);
         }
-    } catch (err) {
-        alert('서버와 통신 중 오류가 발생했습니다. 네트워크 상태를 확인하세요.');
-    }
-};
+    };
 </script>
 </body>
 </html>

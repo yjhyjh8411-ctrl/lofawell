@@ -17,11 +17,11 @@
 <div class="container">
     <div class="form-card shadow">
         <h3 class="text-center fw-bold text-dark mb-5">
-            {% if edit_mode %} <i class="bi bi-pencil-square"></i> 복지연금 신청 내역 수정 {% else %} 💰 직원 복지연금 지원 신청서 {% endif %}
+            {% if data and data.app_id %} <i class="bi bi-pencil-square"></i> 복지연금 신청 내역 수정 {% else %} 💰 직원 복지연금 지원 신청서 {% endif %}
         </h3>
 
         <form id="pensionForm" enctype="multipart/form-data">
-            <input type="hidden" name="app_id" value="{{ data.app_id if edit_mode else '' }}">
+            <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
             <input type="hidden" name="type" value="복지연금">
             
             <div class="section-title">1. 신청인 정보</div>
@@ -57,20 +57,20 @@
                 <div class="col-md-6">
                     <label class="fw-bold small">지원 항목</label>
                     <input type="text" name="item_name" class="form-control" 
-                           value="{{ data.지원항목 if edit_mode else '' }}" placeholder="예: 개인연금, 퇴직연금 등" required>
+                           value="{{ data.세부내용.split(' / ')[0].split(':')[1] if data and data.세부내용 and '항목:' in data.세부내용 else '' }}" placeholder="예: 개인연금, 퇴직연금 등" required>
                 </div>
                 
                 <div class="col-md-6">
                     <label class="fw-bold small">금융기관</label>
                     <input type="text" name="bank_name" class="form-control" 
-                           value="{{ data.금융기관 if edit_mode else '' }}" placeholder="예: OO은행, XX증권" required>
+                           value="{{ data.세부내용.split(' / ')[1].split(':')[1] if data and data.세부내용 and '금융:' in data.세부내용 else '' }}" placeholder="예: OO은행, XX증권" required>
                 </div>
 
                 <div class="col-md-4">
                     <label class="fw-bold small">본인 부담금</label>
                     <div class="input-group">
                         <input type="number" name="self_pay" class="form-control text-end" 
-                               value="{{ data.본인부담 if edit_mode else 0 }}" required>
+                               value="{{ data.세부내용.split(' / ')[2].split(':')[1] if data and data.세부내용 and '본인부담:' in data.세부내용 else 0 }}" required>
                         <span class="input-group-text">원</span>
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                     <label class="fw-bold small text-primary">신청 금액</label>
                     <div class="input-group">
                         <input type="number" name="amount" class="form-control fw-bold text-end text-primary" 
-                               value="{{ data.신청금액 if edit_mode else 0 }}" required>
+                               value="{{ data.신청금액 if data else 0 }}" required>
                         <span class="input-group-text">원</span>
                     </div>
                 </div>
@@ -87,13 +87,13 @@
                 <div class="col-md-4">
                     <label class="fw-bold small">지급 계좌 정보</label>
                     <input type="text" name="account" class="form-control" 
-                           value="{{ data.계좌번호 if edit_mode else '' }}" placeholder="은행/계좌번호/예금주" required>
+                           value="{{ data.계좌번호 if data else '' }}" placeholder="은행/계좌번호/예금주" required>
                 </div>
 
                 <div class="col-12 mt-3">
                     <label class="fw-bold small"><i class="bi bi-paperclip"></i> 증빙서류 첨부 (납입증명서, 통장사본 등)</label>
                     <input type="file" name="attachment" class="form-control">
-                    {% if edit_mode and data.첨부파일 %}
+                    {% if data and data.첨부파일 %}
                     <div class="mt-2 small text-muted">기존 파일: <span class="text-primary">{{ data.첨부파일 }}</span></div>
                     {% endif %}
                 </div>
@@ -106,7 +106,7 @@
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-warning btn-lg shadow fw-bold text-dark">
-                    {% if edit_mode %} <i class="bi bi-pencil-square"></i> 수정 완료 및 재제출 {% else %} <i class="bi bi-send-fill"></i> 복지연금 신청하기 {% endif %}
+                    {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 수정 완료 및 재제출 {% else %} <i class="bi bi-send-fill"></i> 복지연금 신청하기 {% endif %}
                 </button>
                 <a href="/my_status" class="btn btn-outline-secondary">취소하고 돌아가기</a>
             </div>
@@ -118,27 +118,25 @@
 <script>
     document.getElementById('pensionForm').onsubmit = async (e) => {
         e.preventDefault();
-        
-        // FormData를 사용하면 텍스트와 파일이 한꺼번에 서버로 전송됩니다.
         const formData = new FormData(e.target);
 
         try {
-            // 수정 모드와 신규 제출 모두 /submit 경로에서 처리하도록 설계되었습니다.
-            const res = await fetch('/submit', { 
-                method: 'POST', 
-                body: formData 
-            });
-            
+            const res = await fetch('/submit', { method: 'POST', body: formData });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
+            }
             const result = await res.json();
             
             if(result.status === 'success') {
-                alert('신청서가 정상적으로 제출되었습니다.');
-                window.location.href = '/my_status'; 
+                alert(result.message || '복지연금 신청이 완료되었습니다.');
+                window.location.href = '/my_status';
             } else {
                 alert('오류 발생: ' + result.message);
             }
-        } catch (err) { 
-            alert('서버와 통신 중 오류가 발생했습니다. 서버 실행 상태를 확인하세요.'); 
+        } catch (err) {
+            console.error('Submission error:', err);
+            alert('제출 중 오류가 발생했습니다: ' + err.message);
         }
     };
 </script>

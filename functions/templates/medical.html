@@ -17,11 +17,11 @@
 
 <div class="form-card shadow">
     <h3 class="text-center fw-bold text-danger mb-4">
-        {% if data %} <i class="bi bi-pencil-square"></i> 의료비 신청 수정 {% else %} 🏥 의료비 지원 신청서 {% endif %}
+        {% if data and data.app_id %} <i class="bi bi-pencil-square"></i> 의료비 신청 수정 {% else %} 🏥 의료비 지원 신청서 {% endif %}
     </h3>
 
     <form id="medicalForm" enctype="multipart/form-data">
-        <input type="hidden" name="app_id" value="{{ data.app_id if data else '' }}">
+        <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
         <input type="hidden" name="type" value="의료비지원">
         
         <div class="section-title">1. 신청인 정보</div>
@@ -91,8 +91,6 @@
             <button type="submit" class="btn btn-danger btn-lg shadow fw-bold">
                 {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 수정 완료 및 재제출 {% else %} <i class="bi bi-send-check"></i> 의료비 신청서 제출하기 {% endif %}
             </button>
-
-
             <a href="/my_status" class="btn btn-outline-secondary">목록으로 돌아가기</a>
         </div>
     </form>
@@ -127,8 +125,6 @@
     window.onload = function() {
         const rawDetail = `{{ data.세부내용 if data else '' }}`;
         if (rawDetail) {
-            // "항목: / 금융: / 본인부담: / 내용:" 형태의 문자열에서 데이터 추출
-            // 또는 이전의 "병원|날짜|금액" 형태를 고려
             if (rawDetail.includes('||')) {
                 const records = rawDetail.split('||');
                 records.forEach(record => {
@@ -136,7 +132,6 @@
                     if (parts.length === 3) addRow(parts[0], parts[1], parts[2]);
                 });
             } else if (rawDetail.includes('내용:')) {
-                // 새로운 세부내용 포맷에서 실제 진료내역 텍스트만 추출
                 const contentPart = rawDetail.split('내용:')[1];
                 if (contentPart && contentPart.includes('||')) {
                     const records = contentPart.split('||');
@@ -149,7 +144,7 @@
                 }
             }
         } else {
-            addRow(); // 신규 신청 시 빈 줄 1개
+            addRow();
         }
         calcTotal();
     };
@@ -157,10 +152,8 @@
     // 제출 처리
     document.getElementById('medicalForm').onsubmit = async (e) => {
         e.preventDefault();
-        
         const formData = new FormData(e.target);
         
-        // 상세 내역을 텍스트로 묶기 (병원|날짜|금액)
         let medicalDetails = [];
         document.querySelectorAll('.medical-row').forEach(row => {
             const org = row.querySelector('.med_org').value;
@@ -168,23 +161,25 @@
             const amt = row.querySelector('.med_amount').value;
             if(org && date && amt) medicalDetails.push(`${org}|${date}|${amt}`);
         });
-
-        // 서버 app.py의 handle_submit 형식을 맞추기 위해 detail_text에 저장
         formData.append('detail_text', medicalDetails.join('||'));
 
         try {
-            // FormData가 파일(attachment)을 자동으로 포함하여 /submit으로 전송
             const res = await fetch('/submit', { method: 'POST', body: formData });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
+            }
             const result = await res.json();
             
             if(result.status === 'success') {
                 alert(result.message || '처리가 완료되었습니다.');
                 window.location.href = '/my_status';
             } else {
-                alert('오류: ' + result.message);
+                alert('오류 발생: ' + result.message);
             }
         } catch (err) {
-            alert('서버 통신 중 오류가 발생했습니다.');
+            console.error('Submission error:', err);
+            alert('제출 중 오류가 발생했습니다: ' + err.message);
         }
     };
 </script>

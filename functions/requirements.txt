@@ -8,3 +8,4 @@ flask-cors
 # Optional (commented out if not used directly)
 pandas
 openpyxl
+Pillow

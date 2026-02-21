@@ -104,20 +104,14 @@
 <script>
     document.getElementById('housingForm').onsubmit = async (e) => {
         e.preventDefault();
-        
-        // FormData를 사용하면 텍스트와 첨부파일이 한꺼번에 서버로 전송됩니다.
         const formData = new FormData(e.target);
 
         try {
-            // 서버의 /submit 경로는 app_id 유무를 보고 신규/수정을 자동 판별합니다.
             const res = await fetch('/submit', { method: 'POST', body: formData });
-            
             if (!res.ok) {
-                const text = await res.text();
-                alert('제출 실패 (' + res.status + '): ' + text.substring(0, 100));
-                return;
+                const errorText = await res.text();
+                throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
             }
-
             const result = await res.json();
             
             if(result.status === 'success') {
@@ -127,7 +121,8 @@
                 alert('제출 오류: ' + result.message);
             }
         } catch (err) {
-            alert('서버와 통신하는 중 치명적 오류가 발생했습니다: ' + err.message);
+            console.error('Submission error:', err);
+            alert('제출 중 오류가 발생했습니다: ' + err.message);
         }
     };
 </script>
