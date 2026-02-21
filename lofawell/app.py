@@ -11,10 +11,15 @@ app.secret_key = 'lofa_infra_final_perfect_2026'
 # --- [Firebase 초기화] ---
 try:
     # 경로를 본인의 환경에 맞게 수정하세요 (예: 'serviceAccountKey.json')
-    cred = credentials.Certificate('lofawell/serviceAccountKey.json')
-    firebase_admin.initialize_app(cred, {
-        'storageBucket': 'your-project-id.appspot.com' # 실제 버킷 주소로 변경 필수
-    })
+    if os.path.exists('lofawell/serviceAccountKey.json'):
+        cred = credentials.Certificate('lofawell/serviceAccountKey.json')
+        firebase_admin.initialize_app(cred, {
+            'storageBucket': 'lofa-43d38.firebasestorage.app'
+        })
+    else:
+        firebase_admin.initialize_app(options={
+            'storageBucket': 'lofa-43d38.firebasestorage.app'
+        })
     db = firestore.client()
     bucket = storage.bucket()
     print("Firebase Cloud 연결 성공")

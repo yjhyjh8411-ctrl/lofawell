@@ -1,14 +1,22 @@
 import os
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import io
+import uuid
+import urllib.parse
+# import pandas as pd # Moved inside function
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 from datetime import datetime
 from werkzeug.utils import secure_filename
-
-# Remove top-level imports to avoid local environment issues during deployment discovery
-# import firebase_admin
-# from firebase_admin import credentials, firestore, storage
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) # Enable CORS for all routes
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024 # 32MB Upload Limit
 app.secret_key = 'lofa_infra_final_perfect_2026'
+app.config['SESSION_COOKIE_NAME'] = '__session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = True 
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600
 
 _db = None
 _bucket = None
@@ -20,24 +28,20 @@ def init_firebase():
         return
 
     import firebase_admin
-    from firebase_admin import credentials
+    from firebase_admin import credentials, firestore
 
     try:
-        # Check if already initialized
         if not firebase_admin._apps:
-            # Try initializing with default credentials (Cloud Functions / Google Cloud environment)
-            # or use explicit service account if 'serviceAccountKey.json' exists locally
             if os.path.exists('serviceAccountKey.json'):
                 cred = credentials.Certificate('serviceAccountKey.json')
                 firebase_admin.initialize_app(cred, {
-                    'storageBucket': 'your-project-id.appspot.com' 
+                    'storageBucket': 'lofa-43d38.firebasestorage.app',
+                    'projectId': 'lofa-43d38'
                 })
                 print("Firebase initialized with serviceAccountKey.json")
             else:
-                # Default credentials (ADC)
-                firebase_admin.initialize_app(options={
-                     'storageBucket': f"{os.environ.get('GCLOUD_PROJECT', 'lofa-43d38')}.appspot.com"
-                })
+                # Firebase App Hosting / Functions에서는 옵션 없이 호출하면 환경 변수(FIREBASE_CONFIG)를 통해 자동 설정됩니다.
+                firebase_admin.initialize_app()
                 print("Firebase initialized with Default Credentials")
         
         _firebase_initialized = True
@@ -63,21 +67,49 @@ def get_bucket():
 
 # --- [유틸리티 함수] ---
 def upload_file_to_storage(file, user_id, user_name, apply_type):
-    """Firebase Storage에 파일을 업로드하고 공개 URL을 반환합니다."""
+    """Firebase Storage에 파일을 업로드하고 다운로드 URL을 반환합니다."""
     if not file or file.filename == '':
         return ""
     
-    now_date = datetime.now().strftime('%Y%m%d_%H%M%S')
-    original_name = secure_filename(file.filename)
-    filename = f"{user_id}_{user_name}_{apply_type}_{now_date}_{original_name}"
+    try:
+        now_date = datetime.now().strftime('%Y%m%d_%H%M%S')
+        original_name = secure_filename(file.filename)
+        filename = f"{user_id}_{user_name}_{apply_type}_{now_date}_{original_name}"
+        
+        bucket = get_bucket()
+        blob = bucket.blob(f"uploads/{filename}")
+        
+        # 파일 업로드 (메모리에서 스트림 읽기)
+        file_content = file.read()
+        blob.upload_from_string(file_content, content_type=file.content_type)
+        
+        # 파일을 공개적으로 읽을 수 있도록 설정
+        try:
+            blob.make_public()
+            public_url = blob.public_url
+        except Exception as e:
+            print(f"Make public failed, using token fallback: {e}")
+            # Fallback to signed URL or token based URL if make_public fails
+            access_token = str(uuid.uuid4())
+            blob.metadata = {"firebaseStorageDownloadTokens": access_token}
+            blob.patch()
+            encoded_name = urllib.parse.quote(f"uploads/{filename}", safe='')
+            public_url = f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}/o/{encoded_name}?alt=media&token={access_token}"
+        
+        return public_url
+    except Exception as e:
+        print(f"Upload Error: {e}")
+        return ""
+
+# --- [인증 체크 미들웨어] ---
+@app.before_request
+def enforce_login():
+    # 로그인이 필요하지 않은 경로들
+    allowed_endpoints = ['index', 'login', 'signup_page', 'signup_process', 'static']
     
-    bucket = get_bucket()
-    blob = bucket.blob(f"uploads/{filename}")
-    blob.upload_from_string(file.read(), content_type=file.content_type)
-    
-    # 파일 접근 권한 설정 (공개 읽기 허용)
-    blob.make_public()
-    return blob.public_url
+    # 세션에 user_id가 없고, 허용된 경로가 아닌 경우 로그인 페이지로 리다이렉트
+    if request.endpoint not in allowed_endpoints and 'user_id' not in session:
+        return redirect(url_for('index'))
 
 # --- [1. 로그인 및 세션] ---
 @app.route('/')
@@ -92,13 +124,15 @@ def login():
         sid = str(request.form['employeeId']).strip()
         pw = str(request.form['password']).strip()
         
-        # Firestore에서 유저 확인
         db = get_db()
         user_ref = db.collection('users').document(sid).get()
         
         if user_ref.exists:
             u_info = user_ref.to_dict()
-            if u_info['비밀번호'] == pw:
+            stored_pw = str(u_info.get('비밀번호', '')).strip()
+            
+            if stored_pw == pw:
+                session.permanent = True
                 session.update({
                     'user_id': sid,
                     'user_name': u_info['이름'],
@@ -107,9 +141,12 @@ def login():
                     'user_join_date': u_info.get('입사일', '')
                 })
                 return jsonify({"status": "success", "is_admin": sid == "admin"})
+            else:
+                return jsonify({"status": "error", "message": "비밀번호가 일치하지 않습니다."})
         
-        return jsonify({"status": "error", "message": "사번 또는 비밀번호가 일치하지 않습니다."})
+        return jsonify({"status": "error", "message": "등록되지 않은 사번입니다. 회원가입을 먼저 진행해 주세요."})
     except Exception as e:
+        print(f"Login Error: {e}")
         return jsonify({"status": "error", "message": f"로그인 중 오류: {e}"})
 
 # --- [2. 신청서 페이지 로드] ---
@@ -139,26 +176,29 @@ def apply_page(page):
 
     return render_template(f'{page}.html', user_name=session['user_name'], edit_mode=edit_mode, data=data)
 
-# --- [3. 신청서 제출 (Firestore 저장)] ---
-@app.route('/submit', methods=['POST'])
+# --- [3. 신청서 제출] ---
+@app.route('/submit', methods=['GET', 'POST'])
 @app.route('/edit_submit', methods=['POST'])
 def handle_submit():
+    print(f"Submit Request: {request.method} {request.path}")
+    
+    if request.method == 'GET':
+        return jsonify({"status": "ok", "message": "Submit endpoint is reachable."})
+
     if 'user_id' not in session:
-        return jsonify({"status": "error", "message": "세션 만료"})
+        return jsonify({"status": "error", "message": "세션 만료. 다시 로그인해주세요."}), 401
     
     try:
         user_id = str(session.get('user_id'))
         user_name = str(session.get('user_name'))
         apply_type = request.form.get('type')
         
-        # 1. 파일 처리
         file = request.files.get('attachment')
-        file_url = request.form.get('old_filename', '') # 수정 시 기존 URL 유지
+        file_url = request.form.get('old_filename', '')
         
         if file and file.filename != '':
             file_url = upload_file_to_storage(file, user_id, user_name, apply_type)
 
-        # 2. 데이터 구성
         amount_raw = str(request.form.get('amount', '0')).replace(',', '')
         amount_val = int(float(amount_raw)) if amount_raw.replace('.', '', 1).isdigit() else 0
         
@@ -194,29 +234,89 @@ def handle_submit():
             '상태': '대기',
             '반려의견': '',
             '대상자성명': request.form.get('target_name', ''),
-            '첨부파일': file_url # 이제 파일명 대신 URL 저장
+            '첨부파일': file_url
         }
 
-        # 3. Firestore 저장 (Upsert)
         db = get_db()
         db.collection('applications').document(app_id).set(new_data)
         
         return jsonify({"status": "success", "message": msg})
 
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+        print(f"Submit Error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # --- [4. 현황 및 관리자 페이지] ---
 @app.route('/my_status')
 def my_status():
     if 'user_id' not in session: return redirect(url_for('index'))
     
-    db = get_db()
-    docs = db.collection('applications').where('사번', '==', str(session['user_id'])).stream()
-    applications = [doc.to_dict() for doc in docs]
-    applications.sort(key=lambda x: x['신청일시'], reverse=True)
+    uid = str(session.get('user_id'))
+    print(f"DEBUG: Status query for user_id: {uid}")
     
-    return render_template('my_status.html', user_name=session['user_name'], applications=applications)
+    try:
+        db = get_db()
+        from google.cloud.firestore import FieldPath
+        
+        # Try different query styles to handle unicode field names safely
+        try:
+            # Style 1: Explicit FieldPath
+            docs = db.collection('applications').where(FieldPath(['사번']), '==', uid).stream()
+        except Exception as e1:
+            print(f"DEBUG: Query Style 1 failed: {e1}")
+            # Style 2: Plain string (original, might fail if encoding issues)
+            docs = db.collection('applications').where('사번', '==', uid).stream()
+        
+        applications = []
+        for doc in docs:
+            d = doc.to_dict()
+            if '신청일시' not in d: d['신청일시'] = ''
+            applications.append(d)
+            
+        applications.sort(key=lambda x: x.get('신청일시', ''), reverse=True)
+        return render_template('my_status.html', user_name=session['user_name'], applications=applications)
+        
+    except Exception as e:
+        print(f"DEBUG: Status query fatal error: {e}")
+        # Fallback: Fetch and filter in-memory if query still fails
+        try:
+            print("DEBUG: Executing fallback in-memory filter")
+            all_docs = db.collection('applications').stream()
+            applications = [d.to_dict() for d in all_docs if str(d.to_dict().get('사번')) == uid]
+            applications.sort(key=lambda x: x.get('신청일시', ''), reverse=True)
+            return render_template('my_status.html', user_name=session['user_name'], applications=applications)
+        except Exception as e2:
+            print(f"DEBUG: Fallback failed: {e2}")
+            return jsonify({"status": "error", "message": f"데이터 로드 실패: {e}"}), 500
+
+@app.route('/cancel_apply', methods=['POST'])
+def cancel_apply():
+    if 'user_id' not in session: return jsonify({"status": "error", "message": "세션 만료"}), 401
+    
+    app_id = request.form.get('app_id')
+    action = request.form.get('action') # 'cancel' or 'delete'
+    
+    try:
+        db = get_db()
+        doc_ref = db.collection('applications').document(app_id)
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return jsonify({"status": "error", "message": "해당 내역을 찾을 수 없습니다."})
+        
+        data = doc.to_dict()
+        if str(data.get('사번')) != str(session.get('user_id')):
+            return jsonify({"status": "error", "message": "권한이 없습니다."})
+            
+        if action == 'delete':
+            doc_ref.delete()
+            return jsonify({"status": "success", "message": "삭제되었습니다."})
+        else:
+            doc_ref.update({'상태': '취소'})
+            return jsonify({"status": "success", "message": "취소되었습니다."})
+            
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/admin')
 def admin_dashboard():
@@ -228,18 +328,15 @@ def admin_dashboard():
     docs = db.collection('applications').stream()
     all_apps = [doc.to_dict() for doc in docs]
     
-    # 관리자용 데이터 가공 (요약 및 통계)
     summary = {}
     stats = {'total': len(all_apps), 'wait': 0, 'approve': 0, 'reject': 0}
     
     for app_item in all_apps:
-        # 통계 계산
         status = app_item.get('상태')
         if status == '대기': stats['wait'] += 1
         elif status == '승인': stats['approve'] += 1
         elif status == '반려': stats['reject'] += 1
         
-        # 유저별 그룹화
         user_key = (app_item['사번'], app_item['성명'])
         if user_key not in summary:
             summary[user_key] = {cat: [] for cat in cats}
@@ -273,10 +370,42 @@ def admin_process():
     })
     return jsonify({"status": "success"})
 
+# --- [엑셀 다운로드 기능 추가] ---
+@app.route('/download_excel')
+def download_excel():
+    if session.get('user_id') != 'admin': return redirect(url_for('index'))
+    
+    try:
+        import pandas as pd
+        db = get_db()
+        docs = db.collection('applications').stream()
+        all_apps = [doc.to_dict() for doc in docs]
+        
+        if not all_apps:
+            return "데이터가 없습니다."
+
+        df = pd.DataFrame(all_apps)
+        
+        # 엑셀 파일 생성 (메모리상에서)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Applications')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=f"applications_{datetime.now().strftime('%Y%m%d')}.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        return f"엑셀 다운로드 오류: {e}"
+
 # --- [5. 회원가입 및 로그아웃] ---
 @app.route('/signup_process', methods=['POST'])
 def signup_process():
     sid = str(request.form.get('employeeId')).strip()
+    pw = str(request.form.get('password')).strip()
     
     db = get_db()
     user_ref = db.collection('users').document(sid).get()
@@ -286,7 +415,7 @@ def signup_process():
     
     new_user = {
         '사번': sid,
-        '비밀번호': request.form.get('password'),
+        '비밀번호': pw,
         '이름': request.form.get('userName'),
         '직급': request.form.get('position'),
         '부서': request.form.get('department'),
@@ -305,6 +434,5 @@ def signup_page():
     return render_template('signup.html')
 
 if __name__ == '__main__':
-    # 외부 접속 허용 (본인 PC IP로 접속 가능)
-    init_firebase() # 로컬 실행 시 초기화
+    init_firebase()
     app.run(host='0.0.0.0', port=5000, debug=True)

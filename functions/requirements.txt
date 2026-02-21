@@ -1,8 +1,10 @@
 # Core
 firebase-functions
 firebase-admin
+google-cloud-firestore
 Flask
 Werkzeug
+flask-cors
 # Optional (commented out if not used directly)
-# pandas
-# openpyxl
+pandas
+openpyxl
