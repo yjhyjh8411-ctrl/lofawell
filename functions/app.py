@@ -140,11 +140,11 @@ def upload_file_to_storage(file, user_id, user_name, apply_type):
 @app.before_request
 def enforce_login():
     # 로그인이 필요하지 않은 경로들
-    allowed_endpoints = ['index', 'login', 'signup_page', 'signup_process', 'static']
+    allowed_endpoints = ['index', 'login_page', 'login_process', 'signup_page', 'signup_process', 'static', 'get_settings']
     
     # 세션에 user_id가 없고, 허용된 경로가 아닌 경우 로그인 페이지로 리다이렉트
     if request.endpoint not in allowed_endpoints and 'user_id' not in session:
-        return redirect(url_for('index'))
+        return redirect(url_for('login_page'))
 
 # --- [보안 및 캐싱 방지 헤더 추가] ---
 @app.after_request
@@ -159,18 +159,25 @@ def add_security_headers(response):
 # --- [1. 로그인 및 세션] ---
 @app.route('/')
 def index():
-    # 세션이 있으면 메인, 없으면 무조건 로그인 페이지
+    # 세션이 있으면 메인, 없으면 로그인 페이지로 리다이렉트
     if 'user_id' in session and session.get('user_id'):
         return render_template('main.html', user_name=session['user_name'])
     
+    return redirect(url_for('login_page'))
+
+@app.route('/login', methods=['GET'])
+def login_page():
+    # 이미 로그인되어 있다면 메인으로
+    if 'user_id' in session and session.get('user_id'):
+        return redirect(url_for('index'))
+        
     # 세션이 없는 경우 로그인 템플릿 반환
-    # 로그아웃 후 뒤로가기 등을 방지하기 위해 응답 객체에 직접 캐시 헤더 추가
     resp = make_response(render_template('login.html'))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return resp
 
-@app.route('/login', methods=['POST'])
-def login():
+@app.route('/login_process', methods=['POST'])
+def login_process():
     try:
         sid = str(request.form['employeeId']).strip()
         pw = str(request.form['password']).strip()

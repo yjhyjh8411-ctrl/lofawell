@@ -117,7 +117,7 @@
         const formData = new FormData(e.target);
         
         try {
-            const res = await fetch('/login', { method: 'POST', body: formData });
+            const res = await fetch('/login_process', { method: 'POST', body: formData });
             const result = await res.json();
             
             if (result.status === 'success') {
