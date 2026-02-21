@@ -140,9 +140,12 @@ def upload_file_to_storage(file, user_id, user_name, apply_type):
 @app.before_request
 def enforce_login():
     # 로그인이 필요하지 않은 경로들
-    allowed_endpoints = ['index', 'login_page', 'login_process', 'signup_page', 'signup_process', 'static', 'get_settings']
+    allowed_endpoints = ['login_page', 'login_process', 'signup_page', 'signup_process', 'static', 'get_settings']
     
     # 세션에 user_id가 없고, 허용된 경로가 아닌 경우 로그인 페이지로 리다이렉트
+    # 루트(/)도 리다이렉트 로직이 있으므로 예외 처리에 추가하거나 아래 route에서 처리
+    if request.path == '/': return # 루트는 아래 index()에서 처리
+
     if request.endpoint not in allowed_endpoints and 'user_id' not in session:
         return redirect(url_for('login_page'))
 
@@ -159,17 +162,21 @@ def add_security_headers(response):
 # --- [1. 로그인 및 세션] ---
 @app.route('/')
 def index():
-    # 세션이 있으면 메인, 없으면 로그인 페이지로 리다이렉트
+    # 루트 접속 시 상태에 따라 분기 처리
     if 'user_id' in session and session.get('user_id'):
-        return render_template('main.html', user_name=session['user_name'])
-    
+        return redirect(url_for('main_page'))
     return redirect(url_for('login_page'))
+
+@app.route('/main')
+def main_page():
+    # 실제 메인 대시보드
+    return render_template('main.html', user_name=session['user_name'])
 
 @app.route('/login', methods=['GET'])
 def login_page():
     # 이미 로그인되어 있다면 메인으로
     if 'user_id' in session and session.get('user_id'):
-        return redirect(url_for('index'))
+        return redirect(url_for('main_page'))
         
     # 세션이 없는 경우 로그인 템플릿 반환
     resp = make_response(render_template('login.html'))
