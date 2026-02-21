@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>장학금 지원 신청 - LOFA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; padding: 30px; font-family: 'Malgun Gothic', sans-serif; }
+        .form-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
+        .scholar-row { background: #fcfdff; border: 1px solid #cfe2ff; padding: 20px; border-radius: 10px; margin-bottom: 15px; position: relative; }
+        .section-title { border-left: 5px solid #0d6efd; padding-left: 15px; margin-bottom: 25px; font-weight: bold; color: #0d6efd; }
+        .info-box { background: #eef6ff; border: 1px solid #b8daff; padding: 15px; border-radius: 10px; font-size: 0.9rem; color: #004085; }
+    </style>
+</head>
+<body>
+
+<div class="form-card shadow">
+    <h3 class="text-center fw-bold text-primary mb-4">
+        {% if data and data.app_id %} 🎓 장학금 신청 내역 수정 {% else %} 🎓 장학금 지원 신청서 {% endif %}
+    </h3>
+
+    <form id="scholarshipForm" enctype="multipart/form-data">
+        <input type="hidden" name="app_id" value="{{ data.app_id if data else '' }}">
+        <input type="hidden" name="type" value="장학금지원">
+        
+        <div class="section-title">1. 신청인 정보</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="fw-bold small">성명</label>
+                <input type="text" name="user_name" class="form-control bg-light" value="{{ data.성명 if data else user_name }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">사번</label>
+                <input type="text" name="user_id" class="form-control bg-light" value="{{ data.사번 if data else user_id }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">부서</label>
+                <input type="text" name="user_dept" class="form-control bg-light" value="{{ data.부서 if data else user_dept }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">직급</label>
+                <input type="text" name="position" class="form-control bg-light" value="{{ data.직급 if data else user_rank }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">입사일</label>
+                <input type="text" name="joinDate" class="form-control bg-light" value="{{ data.입사일 if data else user_join_date }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">전화번호</label>
+                <input type="text" name="phone" class="form-control" value="{{ data.전화번호 if data else '' }}" placeholder="010-0000-0000" required>
+            </div>
+        </div>
+
+        <div class="section-title d-flex justify-content-between align-items-center">
+            2. 장학금 상세 내역 (자녀/본인)
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOne()"><i class="bi bi-plus-circle"></i> 내역 추가</button>
+        </div>
+        
+        <div id="rowContainer"></div>
+
+        <div class="my-4 p-3 bg-light rounded d-flex justify-content-between align-items-center border">
+            <h5 class="m-0 fw-bold text-dark">총 신청 금액 합계</h5>
+            <div class="input-group w-50 shadow-sm">
+                <input type="number" name="amount" id="totalAmt" class="form-control fw-bold text-end text-primary" value="{{ data.신청금액 if data else 0 }}" readonly>
+                <span class="input-group-text bg-white">원</span>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="fw-bold small">지급 계좌번호 (은행/번호/예금주)</label>
+            <input type="text" name="account" class="form-control" value="{{ data.계좌번호 if data else '' }}" placeholder="예: 신한은행 / 110-000-000000 / 홍길동" required>
+        </div>
+
+        <div class="section-title">3. 증빙서류 첨부</div>
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="info-box mb-3">
+                    <i class="bi bi-info-circle-fill"></i> 
+                    <b>안내사항:</b> 재학증명서 및 등록금 납입 영수증을 첨부해 주세요.<br>
+                    (파일이 여러 개인 경우 하나의 PDF 또는 압축파일(ZIP)로 묶어서 제출 권장)
+                </div>
+                <input type="file" name="attachment" class="form-control">
+                {% if data and data.첨부파일 %}
+                <div class="mt-2 small text-muted">기존 파일: <span class="text-primary fw-bold">{{ data.첨부파일 }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg shadow fw-bold">
+                {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 수정 완료 및 재제출 {% else %} <i class="bi bi-send"></i> 장학금 신청서 제출하기 {% endif %}
+            </button>
+            <a href="/my_status" class="btn btn-outline-secondary">목록으로 돌아가기</a>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 신청 금액 합계 계산
+    function calc() {
+        let sum = 0;
+        document.querySelectorAll('.s_price').forEach(i => sum += (parseInt(i.value) || 0));
+        document.getElementById('totalAmt').value = sum;
+    }
+
+    // 내역 줄 추가 함수
+    function addOne(target='', rel='자녀', school='', price='') {
+        const container = document.getElementById('rowContainer');
+        const div = document.createElement('div');
+        div.className = 'scholar-row shadow-sm position-relative';
+        div.innerHTML = `
+            <button type="button" class="btn-close position-absolute" style="top:10px;right:10px;" onclick="this.parentElement.remove(); calc();"></button>
+            <div class="row g-2">
+                <div class="col-md-3"><label class="small text-muted">대상자 성명</label><input type="text" class="form-control s_target" value="${target}" required></div>
+                <div class="col-md-2"><label class="small text-muted">관계</label><select class="form-select s_rel"><option value="자녀" ${rel==='자녀'?'selected':''}>자녀</option><option value="본인" ${rel==='본인'?'selected':''}>본인</option></select></div>
+                <div class="col-md-4"><label class="small text-muted">학교명 및 학년</label><input type="text" class="form-control s_school" value="${school}" required></div>
+                <div class="col-md-3"><label class="small text-muted">신청 금액</label><input type="number" class="form-control s_price" value="${price}" oninput="calc()" required></div>
+            </div>`;
+        container.appendChild(div);
+        calc();
+    }
+
+    // 데이터 복원
+    window.onload = function() {
+        const savedDetail = `{{ data.세부내용 if data else '' }}`;
+        if (savedDetail) {
+            const rows = savedDetail.split('||');
+            rows.forEach(r => {
+                const cols = r.split('|');
+                if(cols.length >= 3) addOne(cols[0], cols[1], cols[2], cols[3]);
+            });
+        } else {
+            addOne();
+        }
+    };
+
+    // 제출 로직
+    document.getElementById('scholarshipForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        let details = [];
+        document.querySelectorAll('.scholar-row').forEach(row => {
+            const t = row.querySelector('.s_target').value;
+            const r = row.querySelector('.s_rel').value;
+            const s = row.querySelector('.s_school').value;
+            const p = row.querySelector('.s_price').value;
+            if(t) details.push(`${t}|${r}|${s}|${p}`);
+        });
+
+        const formData = new FormData(e.target);
+        formData.append('detail_text', details.join('||'));
+
+        try {
+            const res = await fetch('/submit', { method: 'POST', body: formData });
+            const result = await res.json();
+            
+            if(result.status === 'success') {
+                alert(result.message || '처리가 완료되었습니다.');
+                window.location.href = '/my_status'; 
+            } else {
+                alert('오류: ' + result.message);
+            }
+        } catch (err) { 
+            alert('서버 통신 중 오류 발생'); 
+        }
+    };
+</script>
+
+</body>
+</html>

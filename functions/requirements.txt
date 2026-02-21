@@ -1,1 +1,8 @@
-firebase_functions~=0.1.0
+# Core
+firebase-functions
+firebase-admin
+Flask
+Werkzeug
+# Optional (commented out if not used directly)
+# pandas
+# openpyxl

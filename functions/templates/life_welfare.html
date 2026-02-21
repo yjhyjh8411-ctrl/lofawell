@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>생활복지 지원 신청 - LOFA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f7f9; padding: 40px 0; font-family: 'Malgun Gothic', sans-serif; }
+        .form-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        .header-line { border-left: 5px solid #f39c12; padding-left: 15px; margin-bottom: 30px; }
+        .section-title { font-size: 1.1rem; font-weight: bold; color: #e67e22; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 5px; }
+        .info-text { background-color: #fef9e7; border-radius: 10px; padding: 15px; font-size: 0.9rem; color: #444; border: 1px solid #f9e79f; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="form-card shadow">
+        <div class="header-line">
+            <h2 class="fw-bold">{% if data %} 🍊 생활복지 지원 수정 {% else %} 🍊 생활복지 지원 신청서 {% endif %}</h2>
+            <p class="text-muted mb-0">학원 수강료, 도서 구입비 등 임직원의 자기계발 및 생활 복지 지원 양식입니다.</p>
+        </div>
+
+        <form id="lifeWelfareForm" enctype="multipart/form-data">
+            <input type="hidden" name="app_id" value="{{ data.app_id if data else '' }}">
+            <input type="hidden" name="type" value="생활복지지원">
+
+            <div class="section-title">1. 신청인 정보</div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="fw-bold small">성명</label>
+                    <input type="text" name="user_name" class="form-control bg-light" value="{{ data.성명 if data else user_name }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold small">사번</label>
+                    <input type="text" name="user_id" class="form-control bg-light" value="{{ data.사번 if data else user_id }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold small">부서</label>
+                    <input type="text" name="user_dept" class="form-control bg-light" value="{{ data.부서 if data else user_dept }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold small">직급</label>
+                    <input type="text" name="position" class="form-control bg-light" value="{{ data.직급 if data else user_rank }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold small">입사일</label>
+                    <input type="text" name="joinDate" class="form-control bg-light" value="{{ data.입사일 if data else user_join_date }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold small">전화번호</label>
+                    <input type="text" name="phone" class="form-control" value="{{ data.전화번호 if data else '' }}" placeholder="010-0000-0000" required>
+                </div>
+            </div>
+
+            <div class="section-title">2. 지원 신청 내용</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small">대상자 성명</label>
+                    <input type="text" name="target_name" class="form-control" value="{{ data.대상자성명 if data else '본인' }}" required>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-bold small">지원 항목 분류 (수강료, 도서비 등)</label>
+                    <input type="text" name="detail_text" class="form-control" value="{{ data.세부내용 if data else '' }}" placeholder="예: 영어 학원 수강료" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-orange" style="color: #e67e22;">신청 금액</label>
+                    <div class="input-group">
+                        <input type="number" name="amount" class="form-control fw-bold" value="{{ data.신청금액 if data else 0 }}" required>
+                        <span class="input-group-text">원</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small">지급 계좌번호</label>
+                    <input type="text" name="account" class="form-control" value="{{ data.계좌번호 if data else '' }}" placeholder="은행 / 계좌 / 예금주" required>
+                </div>
+                
+                <div class="col-12 mt-3">
+                    <label class="form-label fw-bold small"><i class="bi bi-paperclip"></i> 증빙서류 첨부 (영수증, 수강확인서 등)</label>
+                    <input type="file" name="attachment" class="form-control">
+                    {% if data and data.첨부파일 %}
+                    <div class="mt-2 small text-muted">기존 파일: <span class="text-warning fw-bold">{{ data.첨부파일 }}</span></div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="section-title">3. 증빙 안내</div>
+            <div class="info-text mb-4 shadow-sm">
+                <i class="bi bi-info-circle-fill text-warning"></i> <b>제출 증빙:</b> 
+                실제 지출 증빙 서류(영수증 등)를 반드시 스캔하여 첨부해 주세요. (파일명은 자동으로 사번_성명 형식이 적용됩니다.)
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-warning btn-lg text-white shadow fw-bold" style="background-color: #f39c12; border: none;">
+                    {% if data and data.app_id %} <i class="bi bi-pencil-square"></i> 생활복지 수정 완료 {% else %} <i class="bi bi-send-fill"></i> 생활복지 지원 신청서 제출 {% endif %}
+                </button>
+
+
+
+                <a href="/my_status" class="btn btn-outline-secondary">목록으로 돌아가기</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('lifeWelfareForm').onsubmit = async (e) => {
+    e.preventDefault();
+    
+    // 💡 파일을 포함한 모든 데이터를 전송하기 위해 FormData를 사용합니다.
+    const formData = new FormData(e.target);
+
+    try {
+        const res = await fetch('/submit', { 
+            method: 'POST', 
+            body: formData 
+        });
+        const result = await res.json();
+        
+        if(result.status === 'success') {
+            alert(result.message || '생활복지 신청이 정상적으로 완료되었습니다.');
+            window.location.href = '/my_status'; 
+        } else {
+            alert('오류 발생: ' + result.message);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('서버와 통신 중 오류가 발생했습니다.');
+    }
+};
+</script>
+</body>
+</html>

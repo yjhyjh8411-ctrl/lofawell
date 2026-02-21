@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>LOFA 복지기금 관리자 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f4f7f6; font-family: 'Malgun Gothic', sans-serif; }
+        .admin-header { background: #2c3e50; color: white; padding: 15px 0; }
+        .matrix-container { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow-x: auto; }
+        
+        .table-matrix th { font-size: 0.85rem; background: #e9ecef; text-align: center; border: 1px solid #dee2e6; vertical-align: middle; min-width: 100px; }
+        .table-matrix td { font-size: 0.85rem; border: 1px solid #dee2e6; vertical-align: top; padding: 8px !important; min-width: 140px; }
+        
+        .app-item { 
+            background: #ffffff; border: 1px solid #dee2e6; border-radius: 6px; 
+            padding: 8px; margin-bottom: 6px; cursor: pointer; transition: all 0.2s; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .app-item:hover { background-color: #eef7ff; border-color: #0d6efd; transform: translateY(-2px); }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        
+        .bg-대기 { background-color: #ffc107; }
+        .bg-승인 { background-color: #198754; }
+        .bg-반려 { background-color: #dc3545; }
+        
+        .amt-text { font-weight: bold; color: #333; display: block; font-size: 0.85rem; }
+        .date-text { font-size: 0.7rem; color: #888; }
+        .file-link { color: #0d6efd; text-decoration: none; font-weight: bold; word-break: break-all; }
+        .file-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<header class="admin-header shadow-sm mb-4">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <h4 class="m-0 fw-bold text-warning"><i class="bi bi-shield-lock-fill"></i> LOFA 관리자 모드</h4>
+        <div>
+            <span class="me-3 fw-bold">{{ user_name }}님 접속 중</span>
+            <a href="/admin/download" class="btn btn-success btn-sm me-2"><i class="bi bi-file-earmark-excel"></i> 데이터 다운로드</a>
+            <a href="/logout" class="btn btn-danger btn-sm">로그아웃</a>
+        </div>
+    </div>
+</header>
+
+<div class="container-fluid px-4">
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-md-3">
+            <div class="card p-3 border-0 shadow-sm border-start border-primary border-5">
+                <small class="text-muted">전체 신청</small><h3 class="fw-bold m-0">{{ stats.total }}건</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 border-0 shadow-sm border-start border-warning border-5">
+                <small class="text-muted">검토 대기</small><h3 class="fw-bold m-0">{{ stats.wait }}건</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 border-0 shadow-sm border-start border-success border-5">
+                <small class="text-muted">승인 완료</small><h3 class="fw-bold m-0">{{ stats.approve }}건</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 border-0 shadow-sm border-start border-danger border-5">
+                <small class="text-muted">반려 건수</small><h3 class="fw-bold m-0">{{ stats.reject }}건</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="matrix-container">
+        <h5 class="fw-bold mb-4"><i class="bi bi-grid-3x3"></i> 신청 현황 매트릭스</h5>
+        <table class="table table-matrix table-sm">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">사번</th>
+                    <th style="width: 100px;">성명</th>
+                    {% for cat in categories %}
+                    <th>{{ cat }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in summary %}
+                <tr>
+                    <td class="text-center bg-light fw-bold">{{ row.사번 }}</td>
+                    <td class="text-center bg-light fw-bold">{{ row.성명 }}</td>
+                    {% for cat in categories %}
+                    <td>
+                        {% if row[cat] %}
+                            {% for item in row[cat] %}
+                            <div class="app-item shadow-sm" 
+                                 data-info='{{ item.detail | tojson | safe }}'
+                                 onclick='showAppDetail(this)'>
+                                <span class="status-dot bg-{{ item.status }}"></span>
+                                <span class="amt-text">{{ item.amount }}원</span>
+                                <span class="date-text">{{ item.apply_date[:10] }}</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-3 text-muted">-</div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-text"></i> 신청 상세 정보 및 증빙서류</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" id="modalFooter"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let activeAppData = null;
+    const detailModalObj = new bootstrap.Modal(document.getElementById('detailModal'));
+
+    function showAppDetail(element) {
+        const data = JSON.parse(element.getAttribute('data-info'));
+        if (!data) return;
+        
+        activeAppData = data;
+        
+        let fileSection = data.첨부파일 ? 
+            `<a href="/uploads/${data.첨부파일}" target="_blank" class="file-link">
+                <i class="bi bi-paperclip"></i> ${data.첨부파일} (클릭하여 열기)
+             </a>` : `<span class="text-muted">첨부된 서류가 없습니다.</span>`;
+
+        // 금액 콤마 처리 (안전하게)
+        const displayAmount = data.신청금액 ? Number(String(data.신청금액).replace(/[^0-9.-]+/g,"")).toLocaleString() : "0";
+
+        let contentHtml = `
+            <table class="table table-bordered">
+                <tr><th class="bg-light w-25">구분</th><td>${data.구분}</td><th class="bg-light w-25">신청일시</th><td>${data.신청일시}</td></tr>
+                <tr><th class="bg-light">성명/사번</th><td>${data.성명} (${data.사번})</td><th class="bg-light">부서/직급</th><td>${data.부서} / ${data.직급}</td></tr>
+                <tr><th class="bg-light">신청금액</th><td class="text-primary fw-bold">${displayAmount}원</td><th class="bg-light">계좌번호</th><td>${data.계좌번호}</td></tr>
+                <tr><th class="bg-light">세부내용</th><td colspan="3" style="white-space:pre-wrap; min-height:100px;">${data.세부내용}</td></tr>
+                <tr><th class="bg-light">붙임문서</th><td colspan="3">${fileSection}</td></tr>
+                <tr><th class="bg-light">현재상태</th><td colspan="3"><span class="badge ${data.상태 === '대기' ? 'bg-warning text-dark' : (data.상태 === '승인' ? 'bg-success' : 'bg-danger')}">${data.상태}</span></td></tr>
+            </table>
+        `;
+        document.getElementById('modalBody').innerHTML = contentHtml;
+        
+        let footerHtml = '';
+        if (data.상태 === '대기') {
+            footerHtml = `
+                <button class="btn btn-success fw-bold px-4" onclick="handleProcess('승인')">최종 승인</button>
+                <button class="btn btn-danger fw-bold px-4" onclick="handleProcess('반려')">반려 처리</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            `;
+        } else {
+            footerHtml = `<div class="me-auto text-danger small">${data.반려의견 ? '반려사유: ' + data.반려의견 : ''}</div><button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>`;
+        }
+        document.getElementById('modalFooter').innerHTML = footerHtml;
+        detailModalObj.show();
+    }
+
+    async function handleProcess(status) {
+        let rejectReason = '';
+        if (status === '반려') {
+            rejectReason = prompt("반려 사유를 입력해주세요:");
+            if (rejectReason === null) return; 
+            if (rejectReason.trim() === "") { alert("반려 사유를 입력해야 합니다."); return; }
+        }
+        
+        if (!confirm(`[${activeAppData.성명}]님의 신청건을 정말로 [${status}] 처리하시겠습니까?`)) return;
+
+        const fd = new FormData();
+        fd.append('app_id', activeAppData.app_id);
+        fd.append('status', status);
+        fd.append('reason', rejectReason);
+
+        try {
+            const res = await fetch('/admin_process', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert('정상적으로 처리되었습니다.');
+                location.reload();
+            } else {
+                alert('오류: ' + result.message);
+            }
+        } catch (err) { alert('통신 오류가 발생했습니다.'); }
+    }
+</script>
+</body>
+</html>

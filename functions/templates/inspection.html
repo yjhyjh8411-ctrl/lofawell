@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>선진산업시찰 신청 - LOFA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; padding: 30px; font-family: 'Malgun Gothic', sans-serif; }
+        .form-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        .section-title { border-left: 5px solid #007bff; padding-left: 15px; margin-bottom: 25px; font-weight: bold; color: #007bff; }
+        .info-box { background: #f0f7ff; border: 1px solid #cfe2ff; padding: 15px; border-radius: 10px; font-size: 0.9rem; color: #084298; }
+    </style>
+</head>
+<body>
+
+<div class="form-card shadow">
+    <h3 class="text-center fw-bold text-primary mb-4">
+        {% if data and data.app_id %} <i class="bi bi-pencil-square"></i> 산업시찰 신청 수정 {% else %} ✈️ 선진산업시찰 신청서 {% endif %}
+    </h3>
+
+    <form id="inspectionForm" enctype="multipart/form-data">
+        <input type="hidden" name="app_id" value="{{ data.app_id if data else '' }}">
+        <input type="hidden" name="type" value="선진산업시찰">
+        
+        <div class="section-title">1. 신청인 정보</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="fw-bold small">부서</label>
+                <input type="text" name="user_dept" class="form-control bg-light" value="{{ data.부서 if data else user_dept }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="fw-bold small">직급</label>
+                <input type="text" name="position" class="form-control bg-light" value="{{ data.직급 if data else user_rank }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="fw-bold small">성명</label>
+                <input type="text" name="user_name" class="form-control bg-light" value="{{ data.성명 if data else user_name }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="fw-bold small">전화번호</label>
+                <input type="text" name="phone" class="form-control" value="{{ data.전화번호 if data else '' }}" placeholder="010-0000-0000" required>
+            </div>
+        </div>
+
+        <div class="section-title">2. 시찰 상세내역</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-12">
+                <label class="fw-bold small">시찰 장소 (국가/도시)</label>
+                <input type="text" name="target_name" class="form-control" placeholder="예: 독일 뮌헨 등" value="{{ data.대상자성명 if data else '' }}" required>
+            </div>
+            <div class="col-md-12">
+                <label class="fw-bold small">시찰 일정 및 목적</label>
+                <textarea name="detail_text" class="form-control" rows="3" placeholder="시찰 기간 및 주요 방문 목적을 상세히 입력하세요." required>{{ data.세부내용 if data else '' }}</textarea>
+            </div>
+            <div class="col-md-12">
+                <label class="fw-bold small text-primary">신청 금액 (실 소요비용)</label>
+                <div class="input-group">
+                    <input type="number" name="amount" class="form-control fw-bold text-end" value="{{ data.신청금액 if data else '' }}" required>
+                    <span class="input-group-text bg-white">원</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="fw-bold mb-1 small">지급 계좌번호 (은행/번호/예금주)</label>
+            <input type="text" name="account" class="form-control" value="{{ data.계좌번호 if data else '' }}" placeholder="예: 신한은행 / 110-000-000000 / 홍길동" required>
+        </div>
+
+        <div class="section-title">3. 증빙서류 첨부</div>
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="info-box mb-3">
+                    <i class="bi bi-info-circle-fill"></i> 
+                    <b>안내사항:</b> 시찰 계획서, 관련 공문 또는 항공/숙박 예약 내역을 첨부해 주세요.
+                </div>
+                <input type="file" name="attachment" class="form-control">
+                {% if data and data.첨부파일 %}
+                <div class="mt-2 small text-muted">현재 파일: <span class="text-primary fw-bold">{{ data.첨부파일 }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg shadow fw-bold">
+                {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 수정 완료 및 재제출 {% else %} <i class="bi bi-airplane-engines"></i> 시찰 신청하기 {% endif %}
+            </button>
+
+             <a href="/my_status" class="btn btn-outline-secondary">목록으로 돌아가기</a>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('inspectionForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        // 💡 FormData를 통해 텍스트와 파일을 한꺼번에 서버로 보냅니다.
+        const formData = new FormData(e.target);
+
+        try {
+            const res = await fetch('/submit', { method: 'POST', body: formData });
+            const result = await res.json();
+            
+            if(result.status === 'success') {
+                alert(result.message || '시찰 신청이 정상적으로 완료되었습니다.');
+                window.location.href = '/my_status';
+            } else {
+                alert('오류 발생: ' + result.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('서버와 통신하는 중 오류가 발생했습니다.');
+        }
+    };
+</script>
+</body>
+</html>
