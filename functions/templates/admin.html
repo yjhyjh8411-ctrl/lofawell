@@ -2,195 +2,292 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LOFA 복지기금 관리자 시스템</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOFA 관리자 대시보드</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        body { background: #f4f7f6; font-family: 'Malgun Gothic', sans-serif; }
-        .admin-header { background: #2c3e50; color: white; padding: 15px 0; }
-        .matrix-container { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow-x: auto; }
-        
-        .table-matrix th { font-size: 0.85rem; background: #e9ecef; text-align: center; border: 1px solid #dee2e6; vertical-align: middle; min-width: 100px; }
-        .table-matrix td { font-size: 0.85rem; border: 1px solid #dee2e6; vertical-align: top; padding: 8px !important; min-width: 140px; }
-        
-        .app-item { 
-            background: #ffffff; border: 1px solid #dee2e6; border-radius: 6px; 
-            padding: 8px; margin-bottom: 6px; cursor: pointer; transition: all 0.2s; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        :root {
+            --google-blue: #4285F4;
+            --google-red: #EA4335;
+            --google-yellow: #FBBC05;
+            --google-green: #34A853;
+            --bg-gray: #F8F9FA;
         }
-        .app-item:hover { background-color: #eef7ff; border-color: #0d6efd; transform: translateY(-2px); }
-        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        body { background-color: var(--bg-gray); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #3C4043; }
         
-        .bg-대기 { background-color: #ffc107; }
-        .bg-승인 { background-color: #198754; }
-        .bg-반려 { background-color: #dc3545; }
+        /* Sidebar/Header Style */
+        .admin-nav { background: white; border-bottom: 1px solid #DADCE0; padding: 10px 24px; sticky: top; z-index: 1000; }
+        .nav-brand { font-size: 22px; font-weight: 500; color: #5F6368; display: flex; align-items: center; gap: 10px; }
         
-        .amt-text { font-weight: bold; color: #333; display: block; font-size: 0.85rem; }
-        .date-text { font-size: 0.7rem; color: #888; }
-        .file-link { color: #0d6efd; text-decoration: none; font-weight: bold; word-break: break-all; }
-        .file-link:hover { text-decoration: underline; }
+        /* Stats Cards */
+        .stat-card { background: white; border-radius: 8px; border: 1px solid #DADCE0; padding: 20px; transition: box-shadow 0.2s; }
+        .stat-card:hover { box-shadow: 0 1px 6px rgba(32,33,36,0.28); }
+        .stat-val { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
+        .stat-label { font-size: 14px; color: #70757A; font-weight: 500; }
+        
+        /* Quick Task List */
+        .pending-box { background: white; border-radius: 8px; border: 1px solid #DADCE0; overflow: hidden; }
+        .pending-header { background: #F1F3F4; padding: 12px 20px; font-weight: bold; border-bottom: 1px solid #DADCE0; display: flex; justify-content: space-between; align-items: center; }
+        .pending-item { padding: 15px 20px; border-bottom: 1px solid #F1F3F4; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: space-between; }
+        .pending-item:hover { background-color: #F8F9FA; }
+        .pending-item:last-child { border-bottom: none; }
+        
+        /* Matrix View */
+        .matrix-container { background: white; border-radius: 8px; border: 1px solid #DADCE0; padding: 20px; margin-top: 24px; }
+        .table-matrix th { background: #F8F9FA; font-weight: 500; font-size: 13px; text-transform: uppercase; color: #5F6368; border: 1px solid #DADCE0; text-align: center; }
+        .table-matrix td { border: 1px solid #DADCE0; vertical-align: middle; padding: 4px; }
+        
+        .app-dot { 
+            width: 100%; padding: 6px; border-radius: 4px; font-size: 11px; text-align: center; 
+            margin-bottom: 2px; cursor: pointer; border: none; font-weight: bold; 
+        }
+        .dot-대기 { background-color: #FEF7E0; color: #B05E00; }
+        .dot-승인 { background-color: #E6F4EA; color: #137333; }
+        .dot-반려 { background-color: #FCE8E6; color: #C5221F; }
+        
+        /* Search */
+        .search-input { border-radius: 24px; border: 1px solid #DADCE0; padding: 8px 20px; width: 300px; font-size: 14px; }
+        .search-input:focus { border-color: var(--google-blue); outline: none; box-shadow: 0 1px 2px rgba(60,64,67,0.3); }
+
+        .btn-google { border-radius: 4px; font-weight: 500; font-size: 14px; padding: 8px 24px; }
+        .btn-excel { background-color: var(--google-green); color: white; border: none; }
+        .btn-excel:hover { background-color: #2D8A46; color: white; }
     </style>
 </head>
 <body>
 
-<header class="admin-header shadow-sm mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary"><i class="bi bi-speedometer2"></i> 관리자 대시보드</h2>
-        <div>
-            <a href="/download_excel" class="btn btn-success fw-bold me-2"><i class="bi bi-file-earmark-excel"></i> 엑셀 다운로드</a>
-            <a href="/logout" class="btn btn-outline-danger btn-sm">로그아웃</a>
+<nav class="admin-nav d-flex justify-content-between align-items-center">
+    <div class="nav-brand">
+        <img src="https://www.gstatic.com/images/branding/product/1x/admin_48dp.png" width="32" height="32" alt="Admin Icon">
+        <span>LOFA 복지기금 관리</span>
+    </div>
+    <div class="d-flex gap-3 align-items-center">
+        <input type="text" id="searchInput" class="search-input" placeholder="사번 또는 성명으로 검색..." onkeyup="filterTable()">
+        <a href="/download_excel" class="btn btn-google btn-excel"><i class="bi bi-file-earmark-excel"></i> 데이터 내보내기</a>
+        <a href="/logout" class="btn btn-outline-danger btn-sm">로그아웃</a>
+    </div>
+</nav>
+
+<div class="container-fluid p-4">
+    <!-- 1. 핵심 요약 카드 -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">전체 신청</div>
+                <div class="stat-val text-primary">{{ stats.total }}</div>
+                <div class="progress" style="height: 4px;"><div class="progress-bar" style="width: 100%"></div></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">승인 대기중 (처리 필요)</div>
+                <div class="stat-val text-warning">{{ stats.wait }}</div>
+                <div class="progress" style="height: 4px;"><div class="progress-bar bg-warning" style="width: {{ (stats.wait / stats.total * 100)|int if stats.total > 0 else 0 }}%"></div></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">승인 완료</div>
+                <div class="stat-val text-success">{{ stats.approve }}</div>
+                <div class="progress" style="height: 4px;"><div class="progress-bar bg-success" style="width: {{ (stats.approve / stats.total * 100)|int if stats.total > 0 else 0 }}%"></div></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">반려 내역</div>
+                <div class="stat-val text-danger">{{ stats.reject }}</div>
+                <div class="progress" style="height: 4px;"><div class="progress-bar bg-danger" style="width: {{ (stats.reject / stats.total * 100)|int if stats.total > 0 else 0 }}%"></div></div>
+            </div>
         </div>
     </div>
-</header>
 
-<div class="container-fluid px-4">
-    <div class="row g-3 mb-4 text-center">
-        <div class="col-md-3">
-            <div class="card p-3 border-0 shadow-sm border-start border-primary border-5">
-                <small class="text-muted">전체 신청</small><h3 class="fw-bold m-0">{{ stats.total }}건</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 border-0 shadow-sm border-start border-warning border-5">
-                <small class="text-muted">검토 대기</small><h3 class="fw-bold m-0">{{ stats.wait }}건</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 border-0 shadow-sm border-start border-success border-5">
-                <small class="text-muted">승인 완료</small><h3 class="fw-bold m-0">{{ stats.approve }}건</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 border-0 shadow-sm border-start border-danger border-5">
-                <small class="text-muted">반려 건수</small><h3 class="fw-bold m-0">{{ stats.reject }}건</h3>
-            </div>
-        </div>
-    </div>
-
-    <div class="matrix-container">
-        <h5 class="fw-bold mb-4"><i class="bi bi-grid-3x3"></i> 신청 현황 매트릭스</h5>
-        <table class="table table-matrix table-sm">
-            <thead>
-                <tr>
-                    <th style="width: 80px;">사번</th>
-                    <th style="width: 100px;">성명</th>
-                    {% for cat in categories %}
-                    <th>{{ cat }}</th>
+    <div class="row g-4">
+        <!-- 2. 오늘 처리할 일 (대기 목록) -->
+        <div class="col-lg-4">
+            <div class="pending-box shadow-sm">
+                <div class="pending-header">
+                    <span>🔔 승인 대기 목록 ({{ pending_list|length }})</span>
+                    <small class="text-muted" style="font-size: 11px;">최신순</small>
+                </div>
+                <div style="max-height: 600px; overflow-y: auto;">
+                    {% for p in pending_list %}
+                    <div class="pending-item" onclick='showAppDetail({{ p | tojson | safe }})'>
+                        <div>
+                            <div class="fw-bold">{{ p.성명 }} <small class="text-muted">({{ p.사번 }})</small></div>
+                            <div class="text-muted small">{{ p.구분 }} | {{ p.신청일시[:10] }}</div>
+                        </div>
+                        <div class="text-primary fw-bold">{{ "{:,}".format(p.신청금액|int) }}원</div>
+                    </div>
+                    {% else %}
+                    <div class="p-5 text-center text-muted">
+                        <i class="bi bi-check2-all" style="font-size: 2rem;"></i>
+                        <p class="mt-2">처리할 내역이 없습니다.</p>
+                    </div>
                     {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in summary %}
-                <tr>
-                    <td class="text-center bg-light fw-bold">{{ row.사번 }}</td>
-                    <td class="text-center bg-light fw-bold">{{ row.성명 }}</td>
-                    {% for cat in categories %}
-                    <td>
-                        {% if row[cat] %}
-                            {% for item in row[cat] %}
-                            <div class="app-item shadow-sm" 
-                                 data-info='{{ item.detail | tojson | safe }}'
-                                 onclick='showAppDetail(this)'>
-                                <span class="status-dot bg-{{ item.status }}"></span>
-                                <span class="amt-text">{{ item.amount }}원</span>
-                                <span class="date-text">{{ item.apply_date[:10] }}</span>
-                            </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 전체 매트릭스 뷰 -->
+        <div class="col-lg-8">
+            <div class="matrix-container shadow-sm m-0">
+                <h6 class="fw-bold mb-3"><i class="bi bi-table"></i> 직원별 복지 신청 전체 내역</h6>
+                <div class="table-responsive">
+                    <table class="table table-matrix" id="adminTable">
+                        <thead>
+                            <tr>
+                                <th>직원 정보</th>
+                                {% for cat in categories %}
+                                <th style="min-width: 100px;">{{ cat[:2] }}..</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in summary %}
+                            <tr class="user-row">
+                                <td class="bg-light">
+                                    <div class="fw-bold name-cell">{{ row.성명 }}</div>
+                                    <div class="small text-muted id-cell">{{ row.사번 }}</div>
+                                    <div class="small" style="font-size: 10px;">{{ row.부서 }}</div>
+                                </td>
+                                {% for cat in categories %}
+                                <td>
+                                    {% for item in row[cat] %}
+                                    <div class="app-dot dot-{{ item.status }}" 
+                                         onclick='showAppDetail({{ item.detail | tojson | safe }})'>
+                                        {{ item.amount }}
+                                    </div>
+                                    {% endfor %}
+                                </td>
+                                {% endfor %}
+                            </tr>
                             {% endfor %}
-                        {% else %}
-                            <div class="text-center py-3 text-muted">-</div>
-                        {% endif %}
-                    </td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- 상세 모달 (Google Style) -->
 <div class="modal fade" id="detailModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-text"></i> 신청 상세 정보 및 증빙서류</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="m_title">신청서 상세 보기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="modalBody"></div>
-            <div class="modal-footer" id="modalFooter"></div>
+            <div class="modal-body p-4" id="modalBody">
+                <!-- Content via JS -->
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0" id="modalFooter">
+                <!-- Buttons via JS -->
+            </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let activeAppData = null;
-    const detailModalObj = new bootstrap.Modal(document.getElementById('detailModal'));
+    let currentApp = null;
+    const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
 
-    function showAppDetail(element) {
-        const data = JSON.parse(element.getAttribute('data-info'));
-        if (!data) return;
+    function showAppDetail(data) {
+        currentApp = data;
+        const displayAmount = Number(data.신청금액).toLocaleString();
         
-        activeAppData = data;
-        
-        let fileSection = data.첨부파일 ? 
-            `<a href="${data.첨부파일}" target="_blank" class="file-link">
-                <i class="bi bi-paperclip"></i> 증빙서류 열기
-             </a>` : `<span class="text-muted">첨부된 서류가 없습니다.</span>`;
+        let fileBtn = data.첨부파일 ? 
+            `<a href="${data.첨부파일}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-file-earmark-arrow-down"></i> 첨부파일 보기
+             </a>` : `<span class="badge bg-light text-dark">첨부파일 없음</span>`;
 
-        // 금액 콤마 처리 (안전하게)
-        const displayAmount = data.신청금액 ? Number(String(data.신청금액).replace(/[^0-9.-]+/g,"")).toLocaleString() : "0";
-
-        let contentHtml = `
-            <table class="table table-bordered">
-                <tr><th class="bg-light w-25">구분</th><td>${data.구분}</td><th class="bg-light w-25">신청일시</th><td>${data.신청일시}</td></tr>
-                <tr><th class="bg-light">성명/사번</th><td>${data.성명} (${data.사번})</td><th class="bg-light">부서/직급</th><td>${data.부서} / ${data.직급}</td></tr>
-                <tr><th class="bg-light">신청금액</th><td class="text-primary fw-bold">${displayAmount}원</td><th class="bg-light">계좌번호</th><td>${data.계좌번호}</td></tr>
-                <tr><th class="bg-light">세부내용</th><td colspan="3" style="white-space:pre-wrap; min-height:100px;">${data.세부내용}</td></tr>
-                <tr><th class="bg-light">붙임문서</th><td colspan="3">${fileSection}</td></tr>
-                <tr><th class="bg-light">현재상태</th><td colspan="3"><span class="badge ${data.상태 === '대기' ? 'bg-warning text-dark' : (data.상태 === '승인' ? 'bg-success' : 'bg-danger')}">${data.상태}</span></td></tr>
-            </table>
+        let content = `
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="mb-3"><label class="text-muted small d-block">신청 종류</label><span class="fw-bold fs-5">${data.구분}</span></div>
+                    <div class="mb-3"><label class="text-muted small d-block">신청인</label><span class="fw-bold">${data.성명} (${data.사번})</span></div>
+                    <div class="mb-3"><label class="text-muted small d-block">부서 / 직급</label><span>${data.부서} / ${data.직급}</span></div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3"><label class="text-muted small d-block">신청 일시</label><span>${data.신청일시}</span></div>
+                    <div class="mb-3"><label class="text-muted small d-block">신청 금액</label><span class="text-primary fw-bold fs-5">${displayAmount}원</span></div>
+                    <div class="mb-3"><label class="text-muted small d-block">계좌 정보</label><span>${data.계좌번호}</span></div>
+                </div>
+                <div class="col-12">
+                    <div class="p-3 bg-light rounded" style="min-height: 100px;">
+                        <label class="text-muted small d-block mb-2">세부 내용</label>
+                        <div style="white-space: pre-wrap;">${data.세부내용}</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="text-muted small d-block mb-2">증빙 서류</label>
+                    ${fileBtn}
+                </div>
+            </div>
         `;
-        document.getElementById('modalBody').innerHTML = contentHtml;
-        
-        let footerHtml = '';
+        document.getElementById('modalBody').innerHTML = content;
+
+        let footer = '';
         if (data.상태 === '대기') {
-            footerHtml = `
-                <button class="btn btn-success fw-bold px-4" onclick="handleProcess('승인')">최종 승인</button>
-                <button class="btn btn-danger fw-bold px-4" onclick="handleProcess('반려')">반려 처리</button>
-                <button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            footer = `
+                <div class="d-flex gap-2 w-100">
+                    <button class="btn btn-success flex-fill fw-bold" onclick="handleAction('승인')">최종 승인</button>
+                    <button class="btn btn-danger flex-fill fw-bold" onclick="handleAction('반려')">반려 하기</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
             `;
         } else {
-            footerHtml = `<div class="me-auto text-danger small">${data.반려의견 ? '반려사유: ' + data.반려의견 : ''}</div><button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>`;
+            const statusClass = data.상태 === '승인' ? 'text-success' : 'text-danger';
+            footer = `
+                <div class="me-auto">
+                    <span class="fw-bold ${statusClass}">[${data.상태} 처리됨]</span>
+                    <span class="text-muted ms-2 small">${data.반려의견 ? '사유: ' + data.반려의견 : ''}</span>
+                </div>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            `;
         }
-        document.getElementById('modalFooter').innerHTML = footerHtml;
-        detailModalObj.show();
+        document.getElementById('modalFooter').innerHTML = footer;
+        detailModal.show();
     }
 
-    async function handleProcess(status) {
-        let rejectReason = '';
+    async function handleAction(status) {
+        let reason = '';
         if (status === '반려') {
-            rejectReason = prompt("반려 사유를 입력해주세요:");
-            if (rejectReason === null) return; 
-            if (rejectReason.trim() === "") { alert("반려 사유를 입력해야 합니다."); return; }
+            reason = prompt("반려 사유를 간단히 입력해주세요:");
+            if (!reason) return;
         }
-        
-        if (!confirm(`[${activeAppData.성명}]님의 신청건을 정말로 [${status}] 처리하시겠습니까?`)) return;
 
         const fd = new FormData();
-        fd.append('app_id', activeAppData.app_id);
+        fd.append('app_id', currentApp.app_id);
         fd.append('status', status);
-        fd.append('reason', rejectReason);
+        fd.append('reason', reason);
 
         try {
             const res = await fetch('/admin_process', { method: 'POST', body: fd });
             const result = await res.json();
             if (result.status === 'success') {
-                alert('정상적으로 처리되었습니다.');
+                alert(`정상적으로 ${status} 처리되었습니다.`);
                 location.reload();
             } else {
-                alert('오류: ' + result.message);
+                alert('오류가 발생했습니다: ' + result.message);
             }
-        } catch (err) { alert('통신 오류가 발생했습니다.'); }
+        } catch (e) { alert('서버 통신 오류'); }
+    }
+
+    function filterTable() {
+        const input = document.getElementById('searchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('.user-row');
+        rows.forEach(row => {
+            const name = row.querySelector('.name-cell').innerText.toLowerCase();
+            const id = row.querySelector('.id-cell').innerText.toLowerCase();
+            if (name.includes(input) || id.includes(input)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
     }
 </script>
 </body>

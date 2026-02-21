@@ -346,12 +346,18 @@ def admin_dashboard():
     docs = db.collection('applications').stream()
     all_apps = [doc.to_dict() for doc in docs]
     
+    # 최신순 정렬
+    all_apps.sort(key=lambda x: x.get('신청일시', ''), reverse=True)
+    
     summary = {}
     stats = {'total': len(all_apps), 'wait': 0, 'approve': 0, 'reject': 0}
+    pending_list = []
     
     for app_item in all_apps:
         status = app_item.get('상태')
-        if status == '대기': stats['wait'] += 1
+        if status == '대기': 
+            stats['wait'] += 1
+            pending_list.append(app_item)
         elif status == '승인': stats['approve'] += 1
         elif status == '반려': stats['reject'] += 1
         
@@ -360,6 +366,7 @@ def admin_dashboard():
             summary[user_key] = {cat: [] for cat in cats}
             summary[user_key]['사번'] = app_item['사번']
             summary[user_key]['성명'] = app_item['성명']
+            summary[user_key]['부서'] = app_item.get('부서', '-')
         
         cat = app_item['구분']
         if cat in cats:
@@ -371,7 +378,12 @@ def admin_dashboard():
                 'detail': app_item
             })
 
-    return render_template('admin.html', summary=list(summary.values()), categories=cats, stats=stats, user_name=session['user_name'])
+    return render_template('admin.html', 
+                           summary=list(summary.values()), 
+                           categories=cats, 
+                           stats=stats, 
+                           pending_list=pending_list,
+                           user_name=session['user_name'])
 
 @app.route('/admin_process', methods=['POST'])
 def admin_process():
