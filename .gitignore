@@ -1,0 +1,19 @@
+# Service Account Key
+lofawell/serviceAccountKey.json
+
+# Firebase
+firebase-debug.log
+.firebase/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node.js
+node_modules/
+
+# OS
+.DS_Store

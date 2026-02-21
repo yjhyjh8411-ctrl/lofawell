@@ -5,8 +5,10 @@
   channel = "stable-23.11"; # or "unstable"
   # Use https://search.nixos.org/packages to find packages
   packages = [
-    pkgs.nodejs_20
     pkgs.python3
+    pkgs.python3Packages.pip
+    pkgs.pipx
+    pkgs.nodePackages.pm2
   ];
   # Sets environment variables in the workspace
   env = {};
@@ -19,26 +21,35 @@
     # Enable previews and customize configuration
     previews = {
       enable = true;
-      previews = {
-        web = {
-          command = ["python3" "-m" "http.server" "$PORT" "--bind" "0.0.0.0"];
-          manager = "web";
+      previews = [{
+        # Unique ID for this preview
+        id = "web";
+        # Display name for this preview
+        displayName = "Web Server";
+        # Command to run to start the server. This command first installs dependencies and then runs the app.
+        command = [
+          "bash",
+          "-c",
+          "python3 -m pip install -r lofawell/requirements.txt && pm2-runtime start lofawell/app.py --name lofawell --interpreter python3 --watch"
+        ];
+        # Environment variables to set for this command
+        env = {
+          # Make the server available on all network interfaces
+          "HOST" = "0.0.0.0";
         };
-      };
+        # What to do when the command exits
+        onExit = "restart";
+      }];
     };
     # Workspace lifecycle hooks
     workspace = {
       # Runs when a workspace is first created
       onCreate = {
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
         # Open editors for the following files by default, if they exist:
-        default.openFiles = [ "style.css" "main.js" "index.html" ];
+        default.openFiles = [ "lofawell/app.py", "lofawell/requirements.txt" ];
       };
       # Runs when the workspace is (re)started
       onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
       };
     };
   };
