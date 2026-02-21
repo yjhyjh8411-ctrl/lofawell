@@ -40,22 +40,6 @@
         </a>
     </div>
 
-    <!-- Announcements & Rules Section -->
-    <div class="mt-4 pt-4 border-top">
-        <div class="mb-4">
-            <h6 class="fw-bold mb-2 text-primary">📢 공지사항</h6>
-            <div id="notice-content" class="bg-light p-3 rounded-3 small text-muted" style="max-height: 100px; overflow-y: auto; white-space: pre-wrap;">
-                데이터를 불러오는 중...
-            </div>
-        </div>
-        <div>
-            <h6 class="fw-bold mb-2 text-secondary">📜 복지기금 규정집</h6>
-            <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#rulesModal">
-                규정집 상세 보기
-            </button>
-        </div>
-    </div>
-
     <!-- QR Code Section -->
     <div class="mt-4 pt-4 border-top text-center">
         <p class="text-secondary small mb-3">모바일에서 접속하려면 아래 QR코드를 스캔하세요</p>
@@ -63,46 +47,22 @@
     </div>
 </div>
 
-<!-- Rules Modal -->
-<div class="modal fade" id="rulesModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">LOFA 복지기금 규정집</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="rules-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444;">
-                    데이터를 불러오는 중...
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-    // Fetch and display settings
-    async function loadSettings() {
-        try {
-            const res = await fetch('/api/settings');
-            const data = await res.json();
-            document.getElementById('notice-content').innerText = data.notice || "공지사항이 없습니다.";
-            document.getElementById('rules-content').innerText = data.rules || "규정집 내용이 아직 등록되지 않았습니다.";
-        } catch (err) {
-            console.error("Settings load error:", err);
-            document.getElementById('notice-content').innerText = "데이터 로딩 실패";
-        }
-    }
-
     // Generate QR code for the current homepage
     window.addEventListener('load', () => {
-        loadSettings();
         new QRCode(document.getElementById("qrcode"), {
+            text: window.location.origin,
+            width: 128,
+            height: 128,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    });
+
+    document.getElementById('loginForm').onsubmit = async (e) => {
             text: window.location.origin,
             width: 128,
             height: 128,

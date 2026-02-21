@@ -607,9 +607,20 @@ def update_settings():
         notice = request.form.get('notice', '')
         
         db = get_db()
-        db.collection('settings').document('site_content').set({
+        doc_ref = db.collection('settings').document('site_content')
+        current_settings = doc_ref.get().to_dict() or {}
+        
+        rules_file_url = current_settings.get('rules_file_url', '')
+        
+        file = request.files.get('rules_file')
+        if file and file.filename != '':
+            # 전용 파일 업로드 로직 (유틸리티 활용)
+            rules_file_url = upload_file_to_storage(file, "admin", "system", "rules")
+        
+        doc_ref.set({
             "rules": rules,
             "notice": notice,
+            "rules_file_url": rules_file_url,
             "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
         return jsonify({"status": "success", "message": "설정이 저장되었습니다."})

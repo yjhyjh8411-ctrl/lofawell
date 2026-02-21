@@ -176,6 +176,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div id="rules-file-section" class="mb-3 text-center d-none">
+                    <a id="rules-file-btn" href="#" target="_blank" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-file-earmark-arrow-down-fill me-2"></i> 규정집 파일 열기/다운로드
+                    </a>
+                    <hr>
+                </div>
                 <div id="rules-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444;">
                     데이터를 불러오는 중...
                 </div>
@@ -200,6 +206,13 @@
             const data = await res.json();
             document.getElementById('notice-content').innerText = data.notice || "공지사항이 없습니다.";
             document.getElementById('rules-content').innerText = data.rules || "규정집 내용이 아직 등록되지 않았습니다.";
+            
+            if (data.rules_file_url) {
+                const fileBtn = document.getElementById('rules-file-btn');
+                const fileSec = document.getElementById('rules-file-section');
+                fileBtn.href = data.rules_file_url;
+                fileSec.classList.remove('d-none');
+            }
         } catch (err) {
             console.error("Settings load error:", err);
             document.getElementById('notice-content').innerText = "데이터 로딩 실패";

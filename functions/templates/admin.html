@@ -190,7 +190,10 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">📜 복지기금 규정집 (모달 팝업 내용)</label>
-                            <textarea name="rules" id="rules-input" class="form-control" rows="5" placeholder="규정집 내용을 입력하세요..."></textarea>
+                            <textarea name="rules" id="rules-input" class="form-control mb-2" rows="5" placeholder="규정집 내용을 입력하세요..."></textarea>
+                            <label class="form-label small text-muted">규정집 파일 첨부 (PDF, 이미지 등)</label>
+                            <input type="file" name="rules_file" class="form-control form-control-sm mb-2">
+                            <div id="rules-file-link" class="small"></div>
                         </div>
                     </div>
                     <div class="text-end">
@@ -251,6 +254,13 @@
             document.getElementById('notice-input').value = data.notice || "";
             document.getElementById('rules-input').value = data.rules || "";
             document.getElementById('rules-content').innerText = data.rules || "규정집 내용이 아직 등록되지 않았습니다.";
+            
+            if (data.rules_file_url) {
+                document.getElementById('rules-file-link').innerHTML = 
+                    `<a href="${data.rules_file_url}" target="_blank" class="text-primary fw-bold">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> 현재 업로드된 규정집 파일 보기
+                    </a>`;
+            }
         } catch (err) { console.error("Settings load error:", err); }
     }
 
