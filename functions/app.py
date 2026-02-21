@@ -154,7 +154,8 @@ def login():
                     'user_name': u_info['이름'],
                     'user_dept': u_info.get('부서', ''),
                     'user_rank': u_info.get('직급', ''),
-                    'user_join_date': u_info.get('입사일', '')
+                    'user_join_date': u_info.get('입사일', ''),
+                    'user_phone': u_info.get('전화번호', '')
                 })
                 return jsonify({"status": "success", "is_admin": sid == "admin"})
             else:
@@ -187,7 +188,8 @@ def apply_page(page):
             '성명': session.get('user_name'),
             '부서': session.get('user_dept'),
             '직급': session.get('user_rank'),
-            '입사일': session.get('user_join_date')
+            '입사일': session.get('user_join_date'),
+            '전화번호': session.get('user_phone', '')
         }
 
     return render_template(f'{page}.html', user_name=session['user_name'], edit_mode=edit_mode, data=data)
@@ -435,7 +437,8 @@ def signup_process():
         '이름': request.form.get('userName'),
         '직급': request.form.get('position'),
         '부서': request.form.get('department'),
-        '입사일': request.form.get('joinDate')
+        '입사일': request.form.get('joinDate'),
+        '전화번호': request.form.get('phone')
     }
     db.collection('users').document(sid).set(new_user)
     return jsonify({"status": "success"})
