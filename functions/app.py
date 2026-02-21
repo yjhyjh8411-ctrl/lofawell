@@ -3,7 +3,7 @@ import io
 import uuid
 import urllib.parse
 # import pandas as pd # Moved inside function
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, make_response
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
@@ -111,12 +111,28 @@ def enforce_login():
     if request.endpoint not in allowed_endpoints and 'user_id' not in session:
         return redirect(url_for('index'))
 
+# --- [보안 및 캐싱 방지 헤더 추가] ---
+@app.after_request
+def add_security_headers(response):
+    # HTML 응답에 대해서만 캐싱을 강력하게 금지 (Cloudflare Edge Cache 방지)
+    if response.mimetype == 'text/html':
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+    return response
+
 # --- [1. 로그인 및 세션] ---
 @app.route('/')
 def index():
-    if 'user_id' in session:
+    # 세션이 있으면 메인, 없으면 무조건 로그인 페이지
+    if 'user_id' in session and session.get('user_id'):
         return render_template('main.html', user_name=session['user_name'])
-    return render_template('login.html')
+    
+    # 세션이 없는 경우 로그인 템플릿 반환
+    # 로그아웃 후 뒤로가기 등을 방지하기 위해 응답 객체에 직접 캐시 헤더 추가
+    resp = make_response(render_template('login.html'))
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return resp
 
 @app.route('/login', methods=['POST'])
 def login():
