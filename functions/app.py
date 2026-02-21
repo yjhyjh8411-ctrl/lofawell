@@ -174,11 +174,35 @@ def main_page():
 
 @app.route('/login', methods=['GET'])
 def login_page():
-    # 이미 로그인되어 있다면 메인으로
+    # 1. 이미 로그인되어 있다면 메인으로
     if 'user_id' in session and session.get('user_id'):
         return redirect(url_for('main_page'))
+    
+    # 2. URL 파라미터를 통한 자동 로그인 시도 (편의 기능)
+    eid = request.args.get('employeeId')
+    pw = request.args.get('password')
+    
+    if eid and pw:
+        try:
+            db = get_db()
+            user_ref = db.collection('users').document(eid.strip()).get()
+            if user_ref.exists:
+                u_info = user_ref.to_dict()
+                if str(u_info.get('비밀번호', '')).strip() == pw.strip():
+                    session.permanent = True
+                    session.update({
+                        'user_id': eid.strip(),
+                        'user_name': u_info['이름'],
+                        'user_dept': u_info.get('부서', ''),
+                        'user_rank': u_info.get('직급', ''),
+                        'user_join_date': u_info.get('입사일', ''),
+                        'user_phone': u_info.get('전화번호', '')
+                    })
+                    return redirect(url_for('main_page'))
+        except Exception as e:
+            print(f"Auto-login error: {e}")
         
-    # 세션이 없는 경우 로그인 템플릿 반환
+    # 3. 파라미터가 없거나 인증 실패 시 로그인 템플릿 반환
     resp = make_response(render_template('login.html'))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return resp
