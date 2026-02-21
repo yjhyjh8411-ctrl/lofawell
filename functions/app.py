@@ -174,11 +174,13 @@ def main_page():
 
 @app.route('/login', methods=['GET'])
 def login_page():
-    # 1. 이미 로그인되어 있다면 메인으로
+    # 1. 이미 로그인되어 있다면 사번에 따라 분기 처리
     if 'user_id' in session and session.get('user_id'):
+        if session.get('user_id') == 'admin':
+            return redirect(url_for('admin_dashboard'))
         return redirect(url_for('main_page'))
     
-    # 2. URL 파라미터를 통한 자동 로그인 시도 (편의 기능)
+    # 2. URL 파라미터를 통한 자동 로그인 시도
     eid = request.args.get('employeeId')
     pw = request.args.get('password')
     
@@ -198,6 +200,9 @@ def login_page():
                         'user_join_date': u_info.get('입사일', ''),
                         'user_phone': u_info.get('전화번호', '')
                     })
+                    # 관리자 여부에 따라 리다이렉트 경로 결정
+                    if eid.strip() == 'admin':
+                        return redirect(url_for('admin_dashboard'))
                     return redirect(url_for('main_page'))
         except Exception as e:
             print(f"Auto-login error: {e}")
