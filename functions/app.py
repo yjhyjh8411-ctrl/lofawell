@@ -4,7 +4,7 @@ import uuid
 import urllib.parse
 # import pandas as pd # Moved inside function
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, make_response
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 from PIL import Image
@@ -245,7 +245,34 @@ def handle_submit():
         user_id = str(session.get('user_id'))
         user_name = str(session.get('user_name'))
         apply_type = request.form.get('type', '일반신청')
+        app_id = request.form.get('app_id')
         
+        amount_raw = str(request.form.get('amount', '0')).replace(',', '')
+        try:
+            amount_val = int(float(amount_raw))
+        except (ValueError, TypeError):
+            amount_val = 0
+
+        db = get_db()
+
+        # 중복 제출 방지 (신규 신청인 경우만 체크)
+        if not app_id or app_id == 'None':
+            five_mins_ago = (datetime.now() - timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')
+            
+            # 동일 사번, 동일 유형, 동일 금액으로 최근 5분 내 신청한 내역이 있는지 조회
+            recent_apps = db.collection('applications') \
+                .where('사번', '==', user_id) \
+                .where('구분', '==', apply_type) \
+                .where('신청금액', '==', amount_val) \
+                .where('신청일시', '>=', five_mins_ago) \
+                .limit(1).get()
+            
+            if len(recent_apps) > 0:
+                return jsonify({
+                    "status": "error", 
+                    "message": "방금 동일한 내용의 신청서가 제출되었습니다. 중복 제출을 방지하기 위해 5분 후 다시 시도해 주세요."
+                }), 400
+
         print(f"Form Data: {request.form}")
         print(f"Files: {request.files}")
 
@@ -260,12 +287,6 @@ def handle_submit():
         for key in request.form.keys():
             if key not in ['app_id', 'old_filename', 'type']:
                 form_data_all[key] = request.form.get(key)
-
-        amount_raw = str(request.form.get('amount', '0')).replace(',', '')
-        try:
-            amount_val = int(float(amount_raw))
-        except (ValueError, TypeError):
-            amount_val = 0
         
         detail_parts = [
             f"항목:{request.form.get('item_name', '')}",
@@ -278,7 +299,6 @@ def handle_submit():
         if not clean_detail:
             clean_detail = request.form.get('detail_text', '')
 
-        app_id = request.form.get('app_id')
         if not app_id or app_id == 'None':
             app_id = str(int(datetime.now().timestamp() * 1000))
             msg = "신청이 완료되었습니다."
@@ -305,7 +325,6 @@ def handle_submit():
             'raw_data': form_data_all  # 모든 원본 필드 저장
         }
 
-        db = get_db()
         db.collection('applications').document(app_id).set(new_data)
         
         return jsonify({"status": "success", "message": msg})
@@ -547,6 +566,41 @@ def logout():
 @app.route('/signup')
 def signup_page():
     return render_template('signup.html')
+
+# --- [6. 사이트 설정 (규정집, 공지사항)] ---
+@app.route('/api/settings', methods=['GET'])
+def get_settings():
+    try:
+        db = get_db()
+        doc = db.collection('settings').document('site_content').get()
+        if doc.exists:
+            return jsonify(doc.to_dict())
+        else:
+            # 기본값 반환
+            return jsonify({
+                "rules": "LOFA 복지기금 규정집 내용이 아직 등록되지 않았습니다.",
+                "notice": "공지사항이 없습니다."
+            })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/settings/update', methods=['POST'])
+def update_settings():
+    if session.get('user_id') != 'admin': return jsonify({"status": "error", "message": "권한이 없습니다."}), 403
+    
+    try:
+        rules = request.form.get('rules', '')
+        notice = request.form.get('notice', '')
+        
+        db = get_db()
+        db.collection('settings').document('site_content').set({
+            "rules": rules,
+            "notice": notice,
+            "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+        return jsonify({"status": "success", "message": "설정이 저장되었습니다."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     init_firebase()

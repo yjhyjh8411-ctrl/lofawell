@@ -177,6 +177,49 @@
                 </div>
             </div>
         </div>
+    <div class="row g-4 mt-4">
+        <!-- 4. 사이트 설정 (규정집, 공지사항) -->
+        <div class="col-12">
+            <div class="matrix-container shadow-sm m-0">
+                <h6 class="fw-bold mb-3"><i class="bi bi-gear-fill"></i> 사이트 콘텐츠 설정 (규정집 & 공지사항)</h6>
+                <form id="settingsForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">📢 공지사항 (로그인 페이지 표시)</label>
+                            <textarea name="notice" id="notice-input" class="form-control" rows="5" placeholder="공지사항 내용을 입력하세요..."></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">📜 복지기금 규정집 (모달 팝업 내용)</label>
+                            <textarea name="rules" id="rules-input" class="form-control" rows="5" placeholder="규정집 내용을 입력하세요..."></textarea>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-outline-secondary btn-google fw-bold me-2" data-bs-toggle="modal" data-bs-target="#rulesModal">규정집 미리보기</button>
+                        <button type="submit" class="btn btn-primary btn-google fw-bold">설정 저장 및 배포</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rules Modal -->
+<div class="modal fade" id="rulesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">LOFA 복지기금 규정집 (미리보기)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="rules-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444;">
+                    데이터를 불러오는 중...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -200,6 +243,37 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Site Settings logic
+    async function loadSettings() {
+        try {
+            const res = await fetch('/api/settings');
+            const data = await res.json();
+            document.getElementById('notice-input').value = data.notice || "";
+            document.getElementById('rules-input').value = data.rules || "";
+            document.getElementById('rules-content').innerText = data.rules || "규정집 내용이 아직 등록되지 않았습니다.";
+        } catch (err) { console.error("Settings load error:", err); }
+    }
+
+    document.getElementById('settingsForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        try {
+            const res = await fetch('/admin/settings/update', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert('사이트 설정이 저장되었습니다. 로그인 페이지에 즉시 반영됩니다.');
+                document.getElementById('rules-content').innerText = fd.get('rules');
+            } else {
+                alert('저장 실패: ' + result.message);
+            }
+        } catch (err) { alert('서버 통신 오류'); }
+    };
+
+    // Load initial settings
+    window.addEventListener('load', () => {
+        loadSettings();
+    });
+
     let currentApp = null;
     const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
 

@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         body { background: #f8f9fa; padding: 30px; font-family: 'Malgun Gothic', sans-serif; }
-        .form-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        .form-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 900px; margin: auto; }
         .section-title { border-left: 5px solid #007bff; padding-left: 15px; margin-bottom: 25px; font-weight: bold; color: #007bff; }
         .info-box { background: #f0f7ff; border: 1px solid #cfe2ff; padding: 15px; border-radius: 10px; font-size: 0.9rem; color: #084298; }
     </style>
@@ -16,28 +16,40 @@
 
 <div class="form-card shadow">
     <h3 class="text-center fw-bold text-primary mb-4">
-        {% if data and data.app_id %} <i class="bi bi-pencil-square"></i> 산업시찰 신청 수정 {% else %} ✈️ 선진산업시찰 신청서 {% endif %}
+        {% if data and data.app_id %} 
+            <i class="bi bi-pencil-square"></i> 산업시찰 신청 수정 
+        {% else %} 
+            ✈️ 선진산업시찰 신청서 
+        {% endif %}
     </h3>
 
     <form id="inspectionForm" enctype="multipart/form-data">
-        <input type="hidden" name="app_id" value="{{ data.app_id if data else '' }}">
+        <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
         <input type="hidden" name="type" value="선진산업시찰">
         
         <div class="section-title">1. 신청인 정보</div>
         <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <label class="fw-bold small">부서</label>
-                <input type="text" name="user_dept" class="form-control bg-light" value="{{ data.부서 if data else user_dept }}" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="fw-bold small">직급</label>
-                <input type="text" name="position" class="form-control bg-light" value="{{ data.직급 if data else user_rank }}" readonly>
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="fw-bold small">성명</label>
                 <input type="text" name="user_name" class="form-control bg-light" value="{{ data.성명 if data else user_name }}" readonly>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <label class="fw-bold small">사번</label>
+                <input type="text" name="user_id" class="form-control bg-light" value="{{ data.사번 if data else user_id }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">부서</label>
+                <input type="text" name="user_dept" class="form-control bg-light" value="{{ data.부서 if data else user_dept }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">직급</label>
+                <input type="text" name="position" class="form-control bg-light" value="{{ data.직급 if data else user_rank }}" readonly>
+            </div>
+            <div class="col-md-4">
+                <label class="fw-bold small">입사일</label>
+                <input type="text" name="joinDate" class="form-control bg-light" value="{{ data.입사일 if data else user_join_date }}" readonly>
+            </div>
+            <div class="col-md-4">
                 <label class="fw-bold small">전화번호</label>
                 <input type="text" name="phone" class="form-control bg-light" value="{{ data.전화번호 if data else '' }}" readonly required>
             </div>
@@ -83,10 +95,13 @@
 
         <div class="d-grid gap-2">
             <button type="submit" class="btn btn-primary btn-lg shadow fw-bold">
-                {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 수정 완료 및 재제출 {% else %} <i class="bi bi-airplane-engines"></i> 시찰 신청하기 {% endif %}
+                {% if data and data.app_id %} 
+                    <i class="bi bi-check2-circle"></i> 수정 완료 및 재제출 
+                {% else %} 
+                    <i class="bi bi-airplane-engines"></i> 시찰 신청하기 
+                {% endif %}
             </button>
-
-             <a href="/my_status" class="btn btn-outline-secondary">목록으로 돌아가기</a>
+            <a href="/my_status" class="btn btn-outline-secondary">목록으로 돌아가기</a>
         </div>
     </form>
 </div>
