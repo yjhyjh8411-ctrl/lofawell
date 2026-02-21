@@ -610,20 +610,33 @@ def logout():
 def signup_page():
     return render_template('signup.html')
 
-# --- [6. 사이트 설정 (규정집, 공지사항)] ---
+# --- [6. 사이트 설정 (규정집 버전관리, 공지사항)] ---
 @app.route('/api/settings', methods=['GET'])
 def get_settings():
     try:
         db = get_db()
-        doc = db.collection('settings').document('site_content').get()
-        if doc.exists:
-            return jsonify(doc.to_dict())
-        else:
-            # 기본값 반환
-            return jsonify({
-                "rules": "LOFA 복지기금 규정집 내용이 아직 등록되지 않았습니다.",
-                "notice": "공지사항이 없습니다."
-            })
+        # 공지사항 가져오기
+        site_doc = db.collection('settings').document('site_content').get()
+        site_data = site_doc.to_dict() if site_doc.exists else {}
+        
+        # 최신 규정집 버전 가져오기
+        latest_rules = {}
+        versions_ref = db.collection('settings').document('site_content').collection('rule_versions')
+        versions = versions_ref.order_by('created_at', direction='DESCENDING').limit(1).get()
+        if versions:
+            latest_rules = versions[0].to_dict()
+        
+        # 모든 버전 목록 (관리용)
+        all_versions = []
+        all_v_docs = versions_ref.order_by('created_at', direction='DESCENDING').limit(20).get()
+        for v in all_v_docs:
+            all_versions.append(v.to_dict())
+
+        return jsonify({
+            "notice": site_data.get('notice', '공지사항이 없습니다.'),
+            "latest_rules": latest_rules,
+            "all_versions": all_versions
+        })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -632,27 +645,38 @@ def update_settings():
     if session.get('user_id') != 'admin': return jsonify({"status": "error", "message": "권한이 없습니다."}), 403
     
     try:
-        rules = request.form.get('rules', '')
-        notice = request.form.get('notice', '')
-        
         db = get_db()
-        doc_ref = db.collection('settings').document('site_content')
-        current_settings = doc_ref.get().to_dict() or {}
+        mode = request.form.get('mode') # 'notice' or 'rules_version'
         
-        rules_file_url = current_settings.get('rules_file_url', '')
-        
-        file = request.files.get('rules_file')
-        if file and file.filename != '':
-            # 전용 파일 업로드 로직 (유틸리티 활용)
-            rules_file_url = upload_file_to_storage(file, "admin", "system", "rules")
-        
-        doc_ref.set({
-            "rules": rules,
-            "notice": notice,
-            "rules_file_url": rules_file_url,
-            "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        })
-        return jsonify({"status": "success", "message": "설정이 저장되었습니다."})
+        if mode == 'notice':
+            notice = request.form.get('notice', '')
+            db.collection('settings').document('site_content').set({
+                "notice": notice,
+                "updated_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }, merge=True)
+            return jsonify({"status": "success", "message": "공지사항이 저장되었습니다."})
+            
+        elif mode == 'rules_version':
+            v_name = request.form.get('version_name', 'v1.0')
+            content = request.form.get('rules', '')
+            files = request.files.getlist('rules_files')
+            
+            uploaded_files = []
+            for f in files:
+                if f and f.filename != '':
+                    f_url = upload_file_to_storage(f, "admin", "system", f"rules_{v_name}")
+                    uploaded_files.append({"name": f.filename, "url": f_url})
+            
+            v_id = str(int(datetime.now().timestamp()))
+            db.collection('settings').document('site_content').collection('rule_versions').document(v_id).set({
+                "version_id": v_id,
+                "version_name": v_name,
+                "content": content,
+                "files": uploaded_files,
+                "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            })
+            return jsonify({"status": "success", "message": f"새 버전({v_name})이 등록되었습니다."})
+
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

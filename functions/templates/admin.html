@@ -177,30 +177,68 @@
                 </div>
             </div>
         </div>
+    </div>
+
     <div class="row g-4 mt-4">
-        <!-- 4. 사이트 설정 (규정집, 공지사항) -->
-        <div class="col-12">
+        <!-- 4. 사이트 설정 (공지사항) -->
+        <div class="col-lg-5">
             <div class="matrix-container shadow-sm m-0">
-                <h6 class="fw-bold mb-3"><i class="bi bi-gear-fill"></i> 사이트 콘텐츠 설정 (규정집 & 공지사항)</h6>
-                <form id="settingsForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">📢 공지사항 (로그인 페이지 표시)</label>
-                            <textarea name="notice" id="notice-input" class="form-control" rows="5" placeholder="공지사항 내용을 입력하세요..."></textarea>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">📜 복지기금 규정집 (모달 팝업 내용)</label>
-                            <textarea name="rules" id="rules-input" class="form-control mb-2" rows="5" placeholder="규정집 내용을 입력하세요..."></textarea>
-                            <label class="form-label small text-muted">규정집 파일 첨부 (PDF, 이미지 등)</label>
-                            <input type="file" name="rules_file" class="form-control form-control-sm mb-2">
-                            <div id="rules-file-link" class="small"></div>
-                        </div>
+                <h6 class="fw-bold mb-3"><i class="bi bi-megaphone-fill text-primary"></i> 실시간 공지사항 설정</h6>
+                <form id="noticeForm">
+                    <input type="hidden" name="mode" value="notice">
+                    <div class="mb-3">
+                        <textarea name="notice" id="notice-input" class="form-control" rows="4" placeholder="메인 페이지에 노출될 공지사항..."></textarea>
                     </div>
                     <div class="text-end">
-                        <button type="button" class="btn btn-outline-secondary btn-google fw-bold me-2" data-bs-toggle="modal" data-bs-target="#rulesModal">규정집 미리보기</button>
-                        <button type="submit" class="btn btn-primary btn-google fw-bold">설정 저장 및 배포</button>
+                        <button type="submit" class="btn btn-primary btn-google fw-bold w-100">공지사항 즉시 반영</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- 5. 규정집 버전 관리 -->
+        <div class="col-lg-7">
+            <div class="matrix-container shadow-sm m-0">
+                <h6 class="fw-bold mb-3"><i class="bi bi-journal-text text-secondary"></i> 규정집 새 버전 등록 및 관리</h6>
+                <form id="rulesVersionForm">
+                    <input type="hidden" name="mode" value="rules_version">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">버전명</label>
+                            <input type="text" name="version_name" class="form-control" placeholder="예: v2.1 (2026 개정)" required>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold">파일 첨부 (여러 개 선택 가능)</label>
+                            <input type="file" name="rules_files" class="form-control" multiple>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">규정 상세 내용</label>
+                        <textarea name="rules" id="rules-input" class="form-control" rows="3" placeholder="변경 사항 또는 요약 내용..."></textarea>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-secondary btn-google fw-bold w-100">새로운 버전으로 배포하기</button>
+                    </div>
+                </form>
+
+                <div class="mt-4">
+                    <h7 class="fw-bold d-block mb-2 border-bottom pb-2">📜 규정집 히스토리 (최근 10개)</h7>
+                    <div class="table-responsive" style="max-height: 200px;">
+                        <table class="table table-sm table-hover" style="font-size: 0.8rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>버전</th>
+                                    <th>등록일</th>
+                                    <th>첨부파일</th>
+                                    <th>보기</th>
+                                </tr>
+                            </thead>
+                            <tbody id="version-history-body">
+                                <!-- JS에서 채움 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -211,12 +249,13 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">LOFA 복지기금 규정집 (미리보기)</h5>
+                <h5 class="modal-title fw-bold" id="rules-modal-title">규정집 상세 보기</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="rules-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444;">
-                    데이터를 불러오는 중...
+                <div id="rules-modal-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444; margin-bottom: 20px;">
+                </div>
+                <div id="rules-modal-files" class="list-group">
                 </div>
             </div>
             <div class="modal-footer">
@@ -246,58 +285,106 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Site Settings logic
+    // Site Settings logic (Improved for versions)
     async function loadSettings() {
         try {
             const res = await fetch('/api/settings');
             const data = await res.json();
             document.getElementById('notice-input').value = data.notice || "";
-            document.getElementById('rules-input').value = data.rules || "";
-            document.getElementById('rules-content').innerText = data.rules || "규정집 내용이 아직 등록되지 않았습니다.";
             
-            if (data.rules_file_url) {
-                document.getElementById('rules-file-link').innerHTML = 
-                    `<a href="${data.rules_file_url}" target="_blank" class="text-primary fw-bold">
-                        <i class="bi bi-file-earmark-pdf-fill"></i> 현재 업로드된 규정집 파일 보기
-                    </a>`;
-            }
+            const historyBody = document.getElementById('version-history-body');
+            historyBody.innerHTML = '';
+            
+            window.ruleVersions = data.all_versions || [];
+            window.ruleVersions.forEach(v => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="fw-bold text-primary">${v.version_name}</td>
+                    <td>${v.created_at ? v.created_at.slice(2, 16) : '-'}</td>
+                    <td>${(v.files || []).length}개</td>
+                    <td><button class="btn btn-xs btn-outline-info py-0" style="font-size: 11px;" onclick="previewVersion('${v.version_id}')">미리보기</button></td>
+                `;
+                historyBody.appendChild(tr);
+            });
         } catch (err) { console.error("Settings load error:", err); }
     }
 
-    document.getElementById('settingsForm').onsubmit = async (e) => {
+    window.previewVersion = (vid) => {
+        const v = window.ruleVersions.find(v => v.version_id === vid);
+        if (!v) return;
+        
+        document.getElementById('rules-modal-title').innerText = `규정집 상세 보기 (${v.version_name})`;
+        document.getElementById('rules-modal-content').innerText = v.content;
+        
+        const filesDiv = document.getElementById('rules-modal-files');
+        filesDiv.innerHTML = '<h6 class="fw-bold mb-2">첨부파일 목록</h6>';
+        
+        if ((v.files || []).length > 0) {
+            v.files.forEach(f => {
+                filesDiv.innerHTML += `
+                    <a href="${f.url}" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-file-earmark-pdf me-2"></i> ${f.name}</span>
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>`;
+            });
+        } else {
+            filesDiv.innerHTML += '<p class="text-muted small">첨부된 파일이 없습니다.</p>';
+        }
+        
+        const modal = new bootstrap.Modal(document.getElementById('rulesModal'));
+        modal.show();
+    }
+
+    document.getElementById('noticeForm').onsubmit = async (e) => {
         e.preventDefault();
         const fd = new FormData(e.target);
         try {
             const res = await fetch('/admin/settings/update', { method: 'POST', body: fd });
             const result = await res.json();
-            if (result.status === 'success') {
-                alert('사이트 설정이 저장되었습니다. 로그인 페이지에 즉시 반영됩니다.');
-                document.getElementById('rules-content').innerText = fd.get('rules');
-            } else {
-                alert('저장 실패: ' + result.message);
-            }
+            if (result.status === 'success') alert('공지사항이 즉시 반영되었습니다.');
         } catch (err) { alert('서버 통신 오류'); }
     };
 
-    // Load initial settings
-    window.addEventListener('load', () => {
-        loadSettings();
-    });
+    document.getElementById('rulesVersionForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "업로드 및 배포 중...";
 
+        try {
+            const res = await fetch('/admin/settings/update', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (result.status === 'success') {
+                alert('규정집 새 버전이 성공적으로 배포되었습니다.');
+                location.reload();
+            } else {
+                alert('오류: ' + result.message);
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        } catch (err) { 
+            alert('서버 통신 오류');
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    };
+
+    // Load initial settings
+    window.addEventListener('load', loadSettings);
+
+    // --- Original Admin Logic ---
     let currentApp = null;
     const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
 
     function showAppDetail(data) {
         currentApp = data;
         const displayAmount = Number(data.신청금액).toLocaleString();
-        
-        // 첨부파일 필드 찾기 (다양한 필드명 호환성 유지)
         const fileUrl = data.첨부파일 || data.file_url || data.attachment || "";
-        
         let fileBtn = fileUrl ? 
-            `<a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-file-earmark-arrow-down"></i> 첨부파일 보기
-             </a>` : `<span class="badge bg-light text-dark">첨부파일 없음</span>`;
+            `<a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-arrow-down"></i> 첨부파일 보기</a>` : 
+            `<span class="badge bg-light text-dark">첨부파일 없음</span>`;
 
         let content = `
             <div class="row g-4">
@@ -325,90 +412,44 @@
                 'target_name': '지원대상/구분', 'item_name': '항목명', 'bank_name': '은행명',
                 'self_pay': '본인부담금', 'detail_text': '상세내역/명세', 'type': '신청유형'
             };
-
             Object.entries(data.raw_data).forEach(([key, val]) => {
                 if (!val || val === 'undefined' || val === 'None') return;
-                const label = fieldMap[key] || key;
-                content += `<tr><th class="text-muted w-25 bg-white">${label}</th><td>${val}</td></tr>`;
+                content += `<tr><th class="text-muted w-25 bg-white">${fieldMap[key] || key}</th><td>${val}</td></tr>`;
             });
         } else {
             content += `<tr><td colspan="2" style="white-space: pre-wrap;">${data.세부내용}</td></tr>`;
         }
-
-        content += `        </tbody>
-                        </table>
-                    </div>
-                </div>
+        content += `</tbody></table></div></div>
                 <div class="col-12">
-                    <div class="mb-2"><label class="text-muted small d-block">연락처 및 기타 정보</label>
-                        <span class="small">사번: ${data.사번} | 입사일: ${data.입사일} | 전화: ${data.전화번호}</span>
-                    </div>
-                    <label class="text-muted small d-block mb-2">증빙 서류</label>
-                    ${fileBtn}
+                    <div class="mb-2"><label class="text-muted small d-block">기타 정보</label><span class="small">입사: ${data.입사일} | 전화: ${data.전화번호}</span></div>
+                    <label class="text-muted small d-block mb-2">증빙 서류</label>${fileBtn}
                 </div>
-            </div>
-        `;
+            </div>`;
         document.getElementById('modalBody').innerHTML = content;
 
-        let footer = '';
-        if (data.상태 === '대기') {
-            footer = `
-                <div class="d-flex gap-2 w-100">
-                    <button class="btn btn-success flex-fill fw-bold" onclick="handleAction('승인')">최종 승인</button>
-                    <button class="btn btn-danger flex-fill fw-bold" onclick="handleAction('반려')">반려 하기</button>
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                </div>
-            `;
-        } else {
-            const statusClass = data.상태 === '승인' ? 'text-success' : 'text-danger';
-            footer = `
-                <div class="me-auto">
-                    <span class="fw-bold ${statusClass}">[${data.상태} 처리됨]</span>
-                    <span class="text-muted ms-2 small">${data.반려의견 ? '사유: ' + data.반려의견 : ''}</span>
-                </div>
-                <button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-            `;
-        }
+        let footer = (data.상태 === '대기') ? 
+            `<div class="d-flex gap-2 w-100"><button class="btn btn-success flex-fill fw-bold" onclick="handleAction('승인')">최종 승인</button><button class="btn btn-danger flex-fill fw-bold" onclick="handleAction('반려')">반려 하기</button><button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button></div>` :
+            `<div class="me-auto"><span class="fw-bold ${data.상태==='승인'?'text-success':'text-danger'}">[${data.상태} 처리됨]</span><span class="text-muted ms-2 small">${data.반려의견 ? '사유: '+data.반려의견 : ''}</span></div><button class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>`;
         document.getElementById('modalFooter').innerHTML = footer;
         detailModal.show();
     }
 
     async function handleAction(status) {
-        let reason = '';
-        if (status === '반려') {
-            reason = prompt("반려 사유를 간단히 입력해주세요:");
-            if (!reason) return;
-        }
-
+        let reason = status === '반려' ? prompt("반려 사유를 입력해주세요:") : '';
+        if (status === '반려' && !reason) return;
         const fd = new FormData();
-        fd.append('app_id', currentApp.app_id);
-        fd.append('status', status);
-        fd.append('reason', reason);
-
+        fd.append('app_id', currentApp.app_id); fd.append('status', status); fd.append('reason', reason);
         try {
             const res = await fetch('/admin_process', { method: 'POST', body: fd });
-            const result = await res.json();
-            if (result.status === 'success') {
-                alert(`정상적으로 ${status} 처리되었습니다.`);
-                location.reload();
-            } else {
-                alert('오류가 발생했습니다: ' + result.message);
-            }
-        } catch (e) { alert('서버 통신 오류'); }
+            if ((await res.json()).status === 'success') { alert(`정상적으로 ${status} 처리되었습니다.`); location.reload(); }
+        } catch (e) { alert('통신 오류'); }
     }
 
     function filterTable() {
         const input = document.getElementById('searchInput').value.toLowerCase();
-        const rows = document.querySelectorAll('.user-row');
-        rows.forEach(row => {
-            const name = row.querySelector('.name-cell').innerText.toLowerCase();
-            const id = row.querySelector('.id-cell').innerText.toLowerCase();
-            const dept = row.querySelector('.dept-cell').innerText.toLowerCase();
-            if (name.includes(input) || id.includes(input) || dept.includes(input)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
+        document.querySelectorAll('.user-row').forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(input) ? "" : "none";
         });
     }
 </script>

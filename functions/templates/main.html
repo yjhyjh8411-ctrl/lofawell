@@ -172,18 +172,15 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">LOFA 복지기금 규정집</h5>
+                <h5 class="modal-title fw-bold" id="rules-modal-title">LOFA 복지기금 규정집</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="rules-file-section" class="mb-3 text-center d-none">
-                    <a id="rules-file-btn" href="#" target="_blank" class="btn btn-primary w-100 py-2">
-                        <i class="bi bi-file-earmark-arrow-down-fill me-2"></i> 규정집 파일 열기/다운로드
-                    </a>
-                    <hr>
-                </div>
-                <div id="rules-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444;">
+                <div id="rules-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444; margin-bottom: 20px;">
                     데이터를 불러오는 중...
+                </div>
+                <div id="rules-files-list" class="list-group">
+                    <!-- Files will be listed here -->
                 </div>
             </div>
             <div class="modal-footer">
@@ -199,19 +196,34 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Fetch and display settings
+    // Fetch and display settings (New logic for versions)
     async function loadSettings() {
         try {
             const res = await fetch('/api/settings');
             const data = await res.json();
-            document.getElementById('notice-content').innerText = data.notice || "공지사항이 없습니다.";
-            document.getElementById('rules-content').innerText = data.rules || "규정집 내용이 아직 등록되지 않았습니다.";
             
-            if (data.rules_file_url) {
-                const fileBtn = document.getElementById('rules-file-btn');
-                const fileSec = document.getElementById('rules-file-section');
-                fileBtn.href = data.rules_file_url;
-                fileSec.classList.remove('d-none');
+            // 공지사항 반영
+            document.getElementById('notice-content').innerText = data.notice || "공지사항이 없습니다.";
+            
+            // 규정집 최신 버전 반영
+            if (data.latest_rules) {
+                const rules = data.latest_rules;
+                document.getElementById('rules-modal-title').innerText = `LOFA 복지기금 규정집 (${rules.version_name})`;
+                document.getElementById('rules-content').innerText = rules.content || "상세 내용이 없습니다.";
+                
+                const filesList = document.getElementById('rules-files-list');
+                filesList.innerHTML = '';
+                
+                if (rules.files && rules.files.length > 0) {
+                    filesList.innerHTML = '<h6 class="fw-bold mb-2"><i class="bi bi-paperclip"></i> 첨부된 규정 파일</h6>';
+                    rules.files.forEach(f => {
+                        filesList.innerHTML += `
+                            <a href="${f.url}" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i> ${f.name}</span>
+                                <span class="badge bg-primary rounded-pill">열기</span>
+                            </a>`;
+                    });
+                }
             }
         } catch (err) {
             console.error("Settings load error:", err);
