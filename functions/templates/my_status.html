@@ -17,18 +17,29 @@
         .badge-cancel { background: #e9ecef; color: #6c757d; font-weight: bold; border: 1px solid #dee2e6; }
         .btn-action { font-weight: bold; border-radius: 8px; transition: 0.2s; font-size: 0.85rem; }
         .table-hover tbody tr:hover { background-color: #fcfdff; }
+        .year-selector { max-width: 150px; }
     </style>
 </head>
 <body>
 
 <div class="container status-container">
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <h3 class="fw-bold m-0 text-dark">
-            <i class="bi bi-file-earmark-person text-danger"></i> {{ user_name }}님 신청 현황
-        </h3>
-        <div class="d-flex gap-2">
-            <a href="/" class="btn btn-outline-dark shadow-sm">
-                <i class="bi bi-house-door"></i> 메인으로 돌아가기
+    <div class="row mb-5">
+        <div class="col-md-6">
+            <h3 class="fw-bold m-0 text-dark">
+                <i class="bi bi-file-earmark-person text-danger"></i> {{ user_name }}님 신청 현황
+            </h3>
+        </div>
+        <div class="col-md-6 d-flex justify-content-md-end align-items-center gap-3 mt-3 mt-md-0">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">조회 연도:</label>
+                <select class="form-select form-select-sm year-selector shadow-sm" onchange="location.href='/my_status?year='+this.value">
+                    {% for y in years %}
+                    <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}년도</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <a href="/" class="btn btn-sm btn-outline-dark shadow-sm">
+                <i class="bi bi-house-door"></i> 메인으로
             </a>
         </div>
     </div>
@@ -99,7 +110,7 @@
                 <tr>
                     <td colspan="6" class="text-center py-5">
                         <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
-                        <p class="mt-3 text-muted">아직 신청하신 내역이 없습니다.</p>
+                        <p class="mt-3 text-muted">{{ selected_year }}년도 신청 내역이 없습니다.</p>
                         <a href="/" class="btn btn-sm btn-danger mt-2">첫 복지 신청하러 가기</a>
                     </td>
                 </tr>

@@ -60,11 +60,19 @@
 <nav class="admin-nav d-flex justify-content-between align-items-center">
     <div class="nav-brand">
         <img src="https://www.gstatic.com/images/branding/product/1x/admin_48dp.png" width="32" height="32" alt="Admin Icon">
-        <span>LOFA 복지기금 관리</span>
+        <span>LOFA 복지기금 관리 <small class="text-muted" style="font-size: 14px;">({{ selected_year }}년도)</small></span>
     </div>
     <div class="d-flex gap-3 align-items-center">
+        <div class="d-flex align-items-center gap-2 me-2">
+            <label class="small fw-bold text-muted mb-0">조회 연도:</label>
+            <select class="form-select form-select-sm" style="width: 110px;" onchange="location.href='/admin?year='+this.value">
+                {% for y in years %}
+                <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}년도</option>
+                {% endfor %}
+            </select>
+        </div>
         <input type="text" id="searchInput" class="search-input" placeholder="사번 또는 성명으로 검색..." onkeyup="filterTable()">
-        <a href="/download_excel" class="btn btn-google btn-excel"><i class="bi bi-file-earmark-excel"></i> 데이터 내보내기</a>
+        <a href="/download_excel?year={{ selected_year }}" class="btn btn-google btn-excel"><i class="bi bi-file-earmark-excel"></i> 데이터 내보내기</a>
         <a href="/logout" class="btn btn-outline-danger btn-sm">로그아웃</a>
     </div>
 </nav>

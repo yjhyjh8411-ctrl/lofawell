@@ -194,7 +194,7 @@ def main_page():
     category_monthly_usage = {}
     
     try:
-        # 사용자의 모든 승인된 신청서 가져오기
+        # 💡 인덱스 오류 방지를 위해 쿼리를 단순화하고 메모리에서 세부 필터링합니다.
         docs = db.collection('applications') \
             .where('user_id', '==', str(uid)) \
             .where('status', '==', '승인') \
@@ -206,13 +206,14 @@ def main_page():
             app_date = d.get('apply_date', d.get('신청일시', ''))
             amount = int(d.get('amount', d.get('신청금액', 0)))
             
-            # 1. 통합 한도 계산 (연간)
-            if app_type in shared_categories and app_date.startswith(current_year):
-                total_shared_approved += amount
-            
-            # 2. 기타 항목 월간 한도 계산
-            if app_type not in shared_categories and app_date.startswith(current_month):
-                category_monthly_usage[app_type] = category_monthly_usage.get(app_type, 0) + amount
+            # 연도 필터링 (메모리)
+            if app_date.startswith(current_year):
+                if app_type in shared_categories:
+                    total_shared_approved += amount
+                
+                # 월간 필터링 (메모리)
+                if app_date.startswith(current_month):
+                    category_monthly_usage[app_type] = category_monthly_usage.get(app_type, 0) + amount
                 
     except Exception as e:
         print(f"Usage calculation error: {e}")
