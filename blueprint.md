@@ -19,6 +19,7 @@ A web-based welfare fund management system for LOFA employees. It allows users t
 - Security: Session management with secure cookies and cache control.
 - **QR Code Integration:** Added a dynamic QR code to the login page for easy mobile access.
 - **Site Content Management:** Added "Rules (Regulations)" and "Announcements" sections to the login page.
+- **Personal Information Consent:** Added a mandatory "Personal Information Collection and Use Consent" section to all application forms and the signup page to comply with South Korean regulations.
 - **Admin Settings Dashboard:** Admins can now update the Rules and Announcements directly from the Admin page, which updates the login page in real-time.
 
 ## Detailed Feature List

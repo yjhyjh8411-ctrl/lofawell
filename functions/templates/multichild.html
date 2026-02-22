@@ -67,13 +67,13 @@
                 <div class="col-md-6">
                     <label class="form-label fw-bold small text-primary">신청 금액 (총액)</label>
                     <div class="input-group">
-                        <input type="number" name="amount" class="form-control fw-bold" value="{{ data.신청금액 if data else 0 }}" required>
+                        <input type="number" name="amount" class="form-control fw-bold" value="{{ data.amount if data.amount else (data.신청금액 if data.신청금액 else 0) }}" required>
                         <span class="input-group-text">원</span>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold small">지급 계좌번호</label>
-                    <input type="text" name="account" class="form-control" value="{{ data.계좌번호 if data else '' }}" placeholder="은행명 및 계좌번호" required>
+                    <input type="text" name="account" class="form-control" value="{{ data.account if data.account else (data.계좌번호 if data.계좌번호 else '') }}" placeholder="은행명 및 계좌번호" required>
                 </div>
             </div>
 
@@ -88,6 +88,28 @@
                     {% if data and data.첨부파일 %}
                     <div class="mt-2 small text-muted">기존 파일: <span class="text-primary fw-bold">{{ data.첨부파일 }}</span></div>
                     {% endif %}
+                </div>
+            </div>
+
+            <div class="section-title" style="color: #6c5ce7; border-bottom: 2px solid #6c5ce7;">5. 개인정보 수집 및 이용 동의</div>
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body bg-light small" style="max-height: 150px; overflow-y: auto;">
+                    <p class="fw-bold mb-1">[개인정보 수집 및 이용에 대한 동의]</p>
+                    <p class="mb-2">LOFA 사내근로복지기금 지원 신청과 관련하여 아래와 같이 귀하의 개인정보를 수집 및 이용하고자 합니다.</p>
+                    <ul class="mb-2">
+                        <li><strong>수집항목:</strong> 성명, 사번, 부서, 직급, 전화번호, 입사일, 계좌번호, 신청 금액 및 사유, 증빙서류 내 포함된 개인정보</li>
+                        <li><strong>수집목적:</strong> 복지기금 지원 대상 확인, 지급 심사 및 처리, 결과 통지, 기금 운영 통계 분석</li>
+                        <li><strong>보유 및 이용기간:</strong> 복지기금 운영 규정 및 관련 법령(근로복지기본법 등)에 따른 보존 기간 종료 시까지</li>
+                    </ul>
+                    <p class="mb-0 text-muted">※ 귀하는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다. 다만, 동의를 거부할 경우 복지기금 지원 신청 및 지급이 제한될 수 있습니다.</p>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacy_consent" required>
+                        <label class="form-check-label fw-bold" for="privacyConsent">
+                            위의 개인정보 수집 및 이용에 동의합니다. (필수)
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -119,7 +141,7 @@ function addChildItem(name='', birth='', note='') {
 }
 
 window.onload = function() {
-    const savedDetail = "{{ data.세부내용 if data else '' }}";
+    const savedDetail = "{{ data.detail if data.detail else (data.세부내용 if data.세부내용 else '') }}";
     if (savedDetail) {
         const rows = savedDetail.split('||');
         rows.forEach(r => {

@@ -61,26 +61,26 @@
                 <label class="fw-bold text-secondary small">위로 구분 (대상)</label>
                 <select name="target_name" class="form-select" required>
                     <option value="">선택하세요</option>
-                    <option value="본인 질병/상해" {% if data and data.대상자성명 == '본인 질병/상해' %}selected{% endif %}>본인 질병/상해</option>
-                    <option value="가족 질병/상해" {% if data and data.대상자성명 == '가족 질병/상해' %}selected{% endif %}>가족 질병/상해</option>
-                    <option value="재난 피해" {% if data and data.대상자성명 == '재난 피해' %}selected{% endif %}>재난 피해</option>
-                    <option value="기타" {% if data and data.대상자성명 == '기타' %}selected{% endif %}>기타</option>
+                    <option value="본인 질병/상해" {% if data and (data.target_name == '본인 질병/상해' or data.대상자성명 == '본인 질병/상해') %}selected{% endif %}>본인 질병/상해</option>
+                    <option value="가족 질병/상해" {% if data and (data.target_name == '가족 질병/상해' or data.대상자성명 == '가족 질병/상해') %}selected{% endif %}>가족 질병/상해</option>
+                    <option value="재난 피해" {% if data and (data.target_name == '재난 피해' or data.대상자성명 == '재난 피해') %}selected{% endif %}>재난 피해</option>
+                    <option value="기타" {% if data and (data.target_name == '기타' or data.대상자성명 == '기타') %}selected{% endif %}>기타</option>
                 </select>
             </div>
             <div class="col-md-12">
                 <label class="fw-bold small">구체적인 사유</label>
-                <textarea name="detail_text" class="form-control" rows="3" placeholder="위로금 신청을 위한 구체적인 사유를 입력하세요." required>{{ data.세부내용 if data else '' }}</textarea>
+                <textarea name="detail_text" class="form-control" rows="3" placeholder="위로금 신청을 위한 구체적인 사유를 입력하세요." required>{{ data.detail_text if data.detail_text else (data.세부내용 if data.세부내용 else '') }}</textarea>
             </div>
             <div class="col-md-6">
                 <label class="fw-bold text-primary small">신청 금액</label>
                 <div class="input-group">
-                    <input type="number" name="amount" class="form-control fw-bold text-end" value="{{ data.신청금액 if data else '' }}" required>
+                    <input type="number" name="amount" class="form-control fw-bold text-end" value="{{ data.amount if data.amount else (data.신청금액 if data.신청금액 else '') }}" required>
                     <span class="input-group-text text-primary fw-bold">원</span>
                 </div>
             </div>
             <div class="col-md-6">
                 <label class="fw-bold small">지급 계좌 (은행/번호/예금주)</label>
-                <input type="text" name="account" class="form-control" value="{{ data.계좌번호 if data else '' }}" required>
+                <input type="text" name="account" class="form-control" value="{{ data.account if data.account else (data.계좌번호 if data.계좌번호 else '') }}" required>
             </div>
 
             <div class="col-12 mt-3">
@@ -95,6 +95,28 @@
         <div class="info-box mb-4">
             <i class="bi bi-info-circle-fill"></i> 
             <b>안내사항:</b> ※ 첨부서류: 4대중증질환(암, 심장질환, 뇌혈관질환, 희귀난치성) 및 대형사고로 인한 영구장애 판정 관련 진단 증빙 서류
+        </div>
+
+        <div class="section-title">3. 개인정보 수집 및 이용 동의</div>
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-body bg-light small" style="max-height: 150px; overflow-y: auto;">
+                <p class="fw-bold mb-1">[개인정보 수집 및 이용에 대한 동의]</p>
+                <p class="mb-2">LOFA 사내근로복지기금 지원 신청과 관련하여 아래와 같이 귀하의 개인정보를 수집 및 이용하고자 합니다.</p>
+                <ul class="mb-2">
+                    <li><strong>수집항목:</strong> 성명, 사번, 부서, 직급, 전화번호, 입사일, 계좌번호, 신청 금액 및 사유, 증빙서류 내 포함된 개인정보</li>
+                    <li><strong>수집목적:</strong> 복지기금 지원 대상 확인, 지급 심사 및 처리, 결과 통지, 기금 운영 통계 분석</li>
+                    <li><strong>보유 및 이용기간:</strong> 복지기금 운영 규정 및 관련 법령(근로복지기본법 등)에 따른 보존 기간 종료 시까지</li>
+                </ul>
+                <p class="mb-0 text-muted">※ 귀하는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다. 다만, 동의를 거부할 경우 복지기금 지원 신청 및 지급이 제한될 수 있습니다.</p>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacy_consent" required>
+                    <label class="form-check-label fw-bold" for="privacyConsent">
+                        위의 개인정보 수집 및 이용에 동의합니다. (필수)
+                    </label>
+                </div>
+            </div>
         </div>
 
         <div class="d-grid gap-2">

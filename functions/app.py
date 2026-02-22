@@ -2,6 +2,12 @@ import os
 import io
 import uuid
 import urllib.parse
+import smtplib
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
+
+load_dotenv() # Load environment variables from .env
+
 # import pandas as pd # Moved inside function
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file, make_response
 from datetime import datetime, timedelta
@@ -170,7 +176,53 @@ def index():
 @app.route('/main')
 def main_page():
     # 실제 메인 대시보드
-    return render_template('main.html', user_name=session['user_name'])
+    if 'user_id' not in session:
+        return redirect(url_for('login_page'))
+    
+    uid = session['user_id']
+    db = get_db()
+    
+    current_year = datetime.now().strftime('%Y')
+    current_month = datetime.now().strftime('%Y-%m')
+    
+    # 💡 통합 한도 항목 및 개인별 월간 한도 설정
+    shared_categories = ['주택지원', '의료비지원', '복지연금']
+    individual_monthly_limit = 100000
+    
+    total_shared_approved = 0
+    # 카테고리별 이번 달 사용 금액 저장용
+    category_monthly_usage = {}
+    
+    try:
+        # 사용자의 모든 승인된 신청서 가져오기
+        docs = db.collection('applications') \
+            .where('user_id', '==', str(uid)) \
+            .where('status', '==', '승인') \
+            .stream()
+            
+        for doc in docs:
+            d = doc.to_dict()
+            app_type = d.get('type', d.get('구분', ''))
+            app_date = d.get('apply_date', d.get('신청일시', ''))
+            amount = int(d.get('amount', d.get('신청금액', 0)))
+            
+            # 1. 통합 한도 계산 (연간)
+            if app_type in shared_categories and app_date.startswith(current_year):
+                total_shared_approved += amount
+            
+            # 2. 기타 항목 월간 한도 계산
+            if app_type not in shared_categories and app_date.startswith(current_month):
+                category_monthly_usage[app_type] = category_monthly_usage.get(app_type, 0) + amount
+                
+    except Exception as e:
+        print(f"Usage calculation error: {e}")
+
+    return render_template('main.html', 
+                           user_name=session['user_name'],
+                           used_amount=total_shared_approved,
+                           total_limit=4800000,
+                           monthly_usage=category_monthly_usage,
+                           monthly_limit=individual_monthly_limit)
 
 @app.route('/login', methods=['GET'])
 def login_page():
@@ -258,6 +310,12 @@ def apply_page(page):
         doc = db.collection('applications').document(edit_app_id).get()
         if doc.exists:
             data = doc.to_dict()
+            # 템플릿에서 기존 값을 input의 name값으로 바로 참조할 수 있도록 raw_data 병합
+            if 'raw_data' in data:
+                raw = data.get('raw_data', {})
+                for k, v in raw.items():
+                    if k not in data:
+                        data[k] = v
             edit_mode = True
 
     if not data:
@@ -296,21 +354,32 @@ def handle_submit():
         except (ValueError, TypeError):
             amount_val = 0
 
+        # 개인정보 수집 및 이용 동의 체크
+        if request.form.get('privacy_consent') != 'on':
+            return jsonify({"status": "error", "message": "개인정보 수집 및 이용에 동의해야 신청이 가능합니다."}), 400
+
         db = get_db()
 
         # 중복 제출 방지 (신규 신청인 경우만 체크)
         if not app_id or app_id == 'None':
             five_mins_ago = (datetime.now() - timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')
             
-            # 동일 사번, 동일 유형, 동일 금액으로 최근 5분 내 신청한 내역이 있는지 조회
-            recent_apps = db.collection('applications') \
-                .where('사번', '==', user_id) \
-                .where('구분', '==', apply_type) \
-                .where('신청금액', '==', amount_val) \
-                .where('신청일시', '>=', five_mins_ago) \
-                .limit(1).get()
+            # 인덱스 오류 방지를 위해 equality 필터만 사용하고, 날짜는 메모리에서 체크
+            recent_apps_query = db.collection('applications') \
+                .where('user_id', '==', user_id) \
+                .where('type', '==', apply_type) \
+                .where('amount', '==', amount_val) \
+                .limit(5).get()
             
-            if len(recent_apps) > 0:
+            is_duplicate = False
+            for doc in recent_apps_query:
+                d = doc.to_dict()
+                app_time = d.get('apply_date', d.get('신청일시', ''))
+                if app_time >= five_mins_ago:
+                    is_duplicate = True
+                    break
+            
+            if is_duplicate:
                 return jsonify({
                     "status": "error", 
                     "message": "방금 동일한 내용의 신청서가 제출되었습니다. 중복 제출을 방지하기 위해 5분 후 다시 시도해 주세요."
@@ -350,22 +419,38 @@ def handle_submit():
 
         new_data = {
             'app_id': app_id,
-            '신청일시': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            '구분': apply_type,
-            '부서': request.form.get('user_dept'),
+            'apply_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'type': apply_type,
+            'user_dept': request.form.get('user_dept'),
+            'user_id': user_id,
+            'user_rank': request.form.get('position'),
+            'user_name': user_name,
+            'join_date': request.form.get('joinDate', ''),
+            'phone': request.form.get('phone', ''),
+            'amount': amount_val,
+            'account': request.form.get('account', ''),
+            'detail': clean_detail,
+            'status': '대기', # 수정 시에도 다시 대기 상태로 변경
+            'reject_reason': '',
+            'target_name': request.form.get('target_name', ''),
+            'attachment': file_url,
+            'raw_data': form_data_all,  # 모든 원본 필드 저장
+            # 하위 호환성을 위해 한글 필드도 유지
             '사번': user_id,
-            '직급': request.form.get('position'),
             '성명': user_name,
+            '부서': request.form.get('user_dept'),
+            '직급': request.form.get('position'),
             '입사일': request.form.get('joinDate', ''),
             '전화번호': request.form.get('phone', ''),
+            '구분': apply_type,
+            '신청일시': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             '신청금액': amount_val,
             '계좌번호': request.form.get('account', ''),
             '세부내용': clean_detail,
             '상태': '대기',
-            '반려의견': '',
             '대상자성명': request.form.get('target_name', ''),
             '첨부파일': file_url,
-            'raw_data': form_data_all  # 모든 원본 필드 저장
+            '반려의견': ''
         }
 
         db.collection('applications').document(app_id).set(new_data)
@@ -386,37 +471,37 @@ def my_status():
     
     try:
         db = get_db()
-        from google.cloud.firestore import FieldPath
-        
-        # Try different query styles to handle unicode field names safely
-        try:
-            # Style 1: Explicit FieldPath
-            docs = db.collection('applications').where(FieldPath(['사번']), '==', uid).stream()
-        except Exception as e1:
-            print(f"DEBUG: Query Style 1 failed: {e1}")
-            # Style 2: Plain string (original, might fail if encoding issues)
-            docs = db.collection('applications').where('사번', '==', uid).stream()
+        # ASCII 필드명을 사용하여 쿼리
+        docs = db.collection('applications').where('user_id', '==', uid).stream()
         
         applications = []
         for doc in docs:
             d = doc.to_dict()
-            if '신청일시' not in d: d['신청일시'] = ''
+            # 하위 호환성을 위한 데이터 매핑
+            if '신청일시' not in d and 'apply_date' in d: d['신청일시'] = d['apply_date']
+            if '구분' not in d and 'type' in d: d['구분'] = d['type']
+            if '상태' not in d and 'status' in d: d['상태'] = d['status']
+            if '신청금액' not in d and 'amount' in d: d['신청금액'] = d['amount']
+            
             applications.append(d)
             
-        applications.sort(key=lambda x: x.get('신청일시', ''), reverse=True)
+        applications.sort(key=lambda x: x.get('apply_date', x.get('신청일시', '')), reverse=True)
         return render_template('my_status.html', user_name=session['user_name'], applications=applications)
         
     except Exception as e:
         print(f"DEBUG: Status query fatal error: {e}")
-        # Fallback: Fetch and filter in-memory if query still fails
+        # Fallback: Fetch all and filter in memory if necessary
         try:
-            print("DEBUG: Executing fallback in-memory filter")
             all_docs = db.collection('applications').stream()
-            applications = [d.to_dict() for d in all_docs if str(d.to_dict().get('사번')) == uid]
-            applications.sort(key=lambda x: x.get('신청일시', ''), reverse=True)
+            applications = []
+            for doc in all_docs:
+                d = doc.to_dict()
+                if str(d.get('user_id')) == uid or str(d.get('사번')) == uid:
+                    if '신청일시' not in d and 'apply_date' in d: d['신청일시'] = d['apply_date']
+                    applications.append(d)
+            applications.sort(key=lambda x: x.get('apply_date', x.get('신청일시', '')), reverse=True)
             return render_template('my_status.html', user_name=session['user_name'], applications=applications)
         except Exception as e2:
-            print(f"DEBUG: Fallback failed: {e2}")
             return jsonify({"status": "error", "message": f"데이터 로드 실패: {e}"}), 500
 
 @app.route('/cancel_apply', methods=['POST'])
@@ -456,7 +541,21 @@ def admin_dashboard():
     
     db = get_db()
     docs = db.collection('applications').stream()
-    all_apps = [doc.to_dict() for doc in docs]
+    all_apps = []
+    for doc in docs:
+        d = doc.to_dict()
+        # 하위 호환성을 위한 데이터 매핑
+        if '신청일시' not in d and 'apply_date' in d: d['신청일시'] = d['apply_date']
+        if '구분' not in d and 'type' in d: d['구분'] = d['type']
+        if '상태' not in d and 'status' in d: d['상태'] = d['status']
+        if '신청금액' not in d and 'amount' in d: d['신청금액'] = d['amount']
+        if '사번' not in d and 'user_id' in d: d['사번'] = d['user_id']
+        if '성명' not in d and 'user_name' in d: d['성명'] = d['user_name']
+        if '부서' not in d and 'user_dept' in d: d['부서'] = d['user_dept']
+        if '직급' not in d and 'user_rank' in d: d['직급'] = d['user_rank']
+        if '입사일' not in d and 'join_date' in d: d['입사일'] = d['join_date']
+        if '첨부파일' not in d and 'attachment' in d: d['첨부파일'] = d['attachment']
+        all_apps.append(d)
     
     # 최신순 정렬
     all_apps.sort(key=lambda x: x.get('신청일시', ''), reverse=True)
@@ -473,17 +572,17 @@ def admin_dashboard():
         elif status == '승인': stats['approve'] += 1
         elif status == '반려': stats['reject'] += 1
         
-        user_key = (app_item['사번'], app_item['성명'])
+        user_key = (app_item.get('사번'), app_item.get('성명'))
         if user_key not in summary:
             summary[user_key] = {cat: [] for cat in cats}
-            summary[user_key]['사번'] = app_item['사번']
-            summary[user_key]['성명'] = app_item['성명']
+            summary[user_key]['사번'] = app_item.get('사번')
+            summary[user_key]['성명'] = app_item.get('성명')
             summary[user_key]['부서'] = app_item.get('부서', '-')
             summary[user_key]['직급'] = app_item.get('직급', '-')
             summary[user_key]['입사일'] = app_item.get('입사일', '-')
             summary[user_key]['전화번호'] = app_item.get('전화번호', '-')
         
-        cat = app_item['구분']
+        cat = app_item.get('구분')
         if cat in cats:
             summary[user_key][cat].append({
                 'app_id': app_item['app_id'],
@@ -501,6 +600,33 @@ def admin_dashboard():
                            pending_list=pending_list,
                            user_name=session['user_name'])
 
+def send_notification_email(to_email, subject, body):
+    """지정된 이메일로 알림 메일을 발송합니다."""
+    # 💡 보안을 위해 Google 계정의 [앱 비밀번호] 사용을 강력히 권장합니다.
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = os.environ.get('SENDER_EMAIL', 'lofawellfare@gmail.com')
+    sender_password = os.environ.get('SENDER_PASSWORD', 'your-app-password')
+
+    if not to_email or sender_email == 'your-email@gmail.com' or sender_password == 'your-app-password':
+        print(f"Email skip: to={to_email}, sender={sender_email} (설정 확인 필요)")
+        return False
+
+    try:
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = to_email
+
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        return True
+    except Exception as e:
+        print(f"Email sending failed: {e}")
+        return False
+
 @app.route('/admin_process', methods=['POST'])
 def admin_process():
     if session.get('user_id') != 'admin': return jsonify({"status": "error"})
@@ -510,10 +636,46 @@ def admin_process():
     reason = request.form.get('reason', '')
     
     db = get_db()
-    db.collection('applications').document(app_id).update({
+    
+    # 1. 신청서 업데이트
+    doc_ref = db.collection('applications').document(app_id)
+    doc = doc_ref.get()
+    if not doc.exists:
+        return jsonify({"status": "error", "message": "신청서를 찾을 수 없습니다."})
+    
+    app_data = doc.to_dict()
+    user_id = app_data.get('user_id', app_data.get('사번'))
+    app_type = app_data.get('type', app_data.get('구분', '복지신청'))
+
+    doc_ref.update({
+        'status': status,
         '상태': status,
+        'reject_reason': reason,
         '반려의견': reason
     })
+
+    # 2. 사용자 정보에서 이메일 가져오기 및 알림 발송
+    try:
+        user_doc = db.collection('users').document(str(user_id)).get()
+        if user_doc.exists:
+            u_info = user_doc.to_dict()
+            user_email = u_info.get('이메일', u_info.get('email'))
+            user_name = u_info.get('이름', '임직원')
+
+            if user_email:
+                subject = f"[LOFA 복지기금] {app_type} 신청 건이 {status}되었습니다."
+                body = f"안녕하세요, {user_name}님.\n\n"
+                body += f"요청하신 '{app_type}' 신청 결과가 [{status}] 처리되었습니다.\n"
+                if status == '반려' and reason:
+                    body += f"\n[반려 사유]\n{reason}\n"
+                    body += "\n내 정보 > 신청 현황 메뉴에서 내용을 수정하여 재신청하실 수 있습니다.\n"
+                
+                body += "\n감사합니다.\nLOFA 사내근로복지기금 시스템"
+                
+                send_notification_email(user_email, subject, body)
+    except Exception as e:
+        print(f"Notification error: {e}")
+
     return jsonify({"status": "success"})
 
 # --- [엑셀 다운로드 기능 개선] ---
@@ -528,6 +690,19 @@ def download_excel():
         all_apps = []
         for doc in docs:
             d = doc.to_dict()
+            # 하위 호환성을 위한 데이터 매핑
+            if '신청일시' not in d and 'apply_date' in d: d['신청일시'] = d['apply_date']
+            if '구분' not in d and 'type' in d: d['구분'] = d['type']
+            if '상태' not in d and 'status' in d: d['상태'] = d['status']
+            if '신청금액' not in d and 'amount' in d: d['신청금액'] = d['amount']
+            if '사번' not in d and 'user_id' in d: d['사번'] = d['user_id']
+            if '성명' not in d and 'user_name' in d: d['성명'] = d['user_name']
+            if '부서' not in d and 'user_dept' in d: d['부서'] = d['user_dept']
+            if '직급' not in d and 'user_rank' in d: d['직급'] = d['user_rank']
+            if '입사일' not in d and 'join_date' in d: d['입사일'] = d['join_date']
+            if '첨부파일' not in d and 'attachment' in d: d['첨부파일'] = d['attachment']
+            if '반려의견' not in d and 'reject_reason' in d: d['반려의견'] = d['reject_reason']
+
             # 원본 데이터(raw_data)가 있으면 그것을 기반으로 정리
             row = {
                 'ID': d.get('app_id'),
@@ -580,6 +755,10 @@ def download_excel():
 # --- [5. 회원가입 및 로그아웃] ---
 @app.route('/signup_process', methods=['POST'])
 def signup_process():
+    # 개인정보 수집 및 이용 동의 체크
+    if request.form.get('privacy_consent') != 'on':
+        return jsonify({"status": "error", "message": "개인정보 수집 및 이용에 동의해야 가입이 가능합니다."}), 400
+
     sid = str(request.form.get('employeeId')).strip()
     pw = str(request.form.get('password')).strip()
     
@@ -595,6 +774,7 @@ def signup_process():
         '이름': request.form.get('userName'),
         '직급': request.form.get('position'),
         '부서': request.form.get('department'),
+        '이메일': request.form.get('email'),
         '입사일': request.form.get('joinDate'),
         '전화번호': request.form.get('phone')
     }

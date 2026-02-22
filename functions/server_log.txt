@@ -1,4 +1,78 @@
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Serving Flask app 'app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.88.0.3:5000
+[33mPress CTRL+C to quit[0m
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 216-124-256
+127.0.0.1 - - [22/Feb/2026 01:53:24] "[32mPOST /submit HTTP/1.1[0m" 302 -
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 168-522-204
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 287-719-078
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 961-623-669
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 941-078-032
+ * Detected change in '/home/user/lofa/functions/main.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 949-630-506
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 325-802-119
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 136-655-566
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 127-608-629
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 248-590-782
+ * Detected change in '/home/user/lofa/functions/app.py', reloading
+Firebase initialized with Default Credentials
+Firebase Cloud 연결 성공
+ * Restarting with watchdog (inotify)
 Traceback (most recent call last):
-  File "/home/user/lofa/functions/app.py", line 10, in <module>
-    from PIL import Image
-ModuleNotFoundError: No module named 'PIL'
+  File "/home/user/lofa/functions/app.py", line 7, in <module>
+    from dotenv import load_dotenv
+ModuleNotFoundError: No module named 'dotenv'

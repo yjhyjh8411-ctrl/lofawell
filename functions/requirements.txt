@@ -5,6 +5,7 @@ google-cloud-firestore
 Flask
 Werkzeug
 flask-cors
+python-dotenv
 # Optional (commented out if not used directly)
 pandas
 openpyxl

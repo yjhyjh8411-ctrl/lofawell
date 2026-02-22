@@ -1,4 +1,4 @@
 #!/bin/bash
-cd lofawell
-pip install -r requirements.txt
-python app.py
+cd functions
+./venv/bin/pip install -r requirements.txt
+./venv/bin/python app.py

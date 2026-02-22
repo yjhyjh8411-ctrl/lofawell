@@ -9,9 +9,12 @@
     pkgs.python3Packages.pip
     pkgs.pipx
     pkgs.nodePackages.pm2
+    pkgs.stdenv.cc.cc.lib
   ];
   # Sets environment variables in the workspace
-  env = {};
+  env = {
+    LD_LIBRARY_PATH = "${pkgs.stdenv.cc.cc.lib}/lib";
+  };
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
@@ -31,7 +34,7 @@
           "bash"
           ,
           "-c",
-          "python3 -m pip install -r lofawell/requirements.txt && pm2-runtime start lofawell/app.py --name lofawell --interpreter python3 --watch"
+          "cd functions && python3 -m pip install -r requirements.txt && python3 app.py"
         ];
         # Environment variables to set for this command
         env = {

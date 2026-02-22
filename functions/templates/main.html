@@ -10,16 +10,37 @@
         body { background-color: #f4f7f6; font-family: 'Malgun Gothic', sans-serif; }
         .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .welcome-section { background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); color: white; padding: 40px 0; margin-bottom: 30px; border-radius: 0 0 30px 30px; }
+        .limit-dashboard { 
+            background: white; border-radius: 20px; padding: 25px; margin-top: -50px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;
+        }
+        .limit-title { font-weight: bold; color: #333; font-size: 1.1rem; }
+        .limit-amount { font-size: 1.5rem; font-weight: 800; color: #0056b3; }
+        .limit-progress { height: 12px; border-radius: 10px; background-color: #e9ecef; margin: 15px 0; }
+        .progress-bar-shared { background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%); }
+        
         .menu-card { 
             background: white; border: 1px solid #e0e0e0; border-radius: 15px; transition: all 0.3s; 
-            cursor: pointer; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            cursor: pointer; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative;
+            overflow: hidden;
         }
         .menu-card:hover { 
             transform: translateY(-10px); 
             box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
             border-color: #0056b3; 
         }
-        .icon-box { font-size: 2.5rem; color: #0056b3; margin-bottom: 15px; }
+        .shared-limit-badge {
+            background-color: #e7f1ff; color: #0056b3; font-size: 0.7rem; font-weight: bold;
+            padding: 2px 8px; border-radius: 10px; margin-bottom: 8px; display: inline-block;
+        }
+        .monthly-limit-badge {
+            font-size: 0.75rem; color: #555; margin-top: 12px; padding: 8px; 
+            background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; display: inline-block; width: 100%;
+            line-height: 1.5;
+        }
+        .usage-label { color: #888; font-size: 0.7rem; }
+        .usage-value { font-weight: bold; color: #0056b3; }
+        .icon-box { font-size: 2.5rem; color: #0056b3; margin-bottom: 10px; }
         .card-title { font-weight: bold; font-size: 1.1rem; color: #333; }
         .card-text { font-size: 0.85rem; color: #666; }
         .status-btn { border-radius: 30px; padding: 10px 25px; font-weight: bold; background-color: #fff; color: #0056b3; border: 1px solid #fff;}
@@ -48,96 +69,173 @@
 <div class="welcome-section text-center">
     <div class="container">
         <h2 class="fw-bold">한국지방재정공제회 사내복지기금 신청</h2>
-        <p class="mb-4">원하시는 복지 항목을 선택하여 신청서를 작성해 주세요.</p>
-        <a href="/my_status" class="btn status-btn shadow-sm">
-            <i class="bi bi-file-earmark-text"></i> 내 신청 현황 확인하기
-        </a>
+        <p class="mb-5">원하시는 복지 항목을 선택하여 신청서를 작성해 주세요.</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="limit-dashboard">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="limit-title mb-1"><i class="bi bi-shield-check text-primary"></i> 주택·의료·연금 통합 한도 현황</div>
+                        <div class="small text-muted">올해 잔여 한도: <span class="fw-bold text-dark">{{ "{:,.0f}".format(total_limit - used_amount) }}원</span> / 4,800,000원</div>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="limit-amount">{{ "{:,.0f}".format(used_amount) }}원 <small class="text-muted" style="font-size: 0.9rem; font-weight: normal;">승인된 금액</small></div>
+                    </div>
+                </div>
+                <div class="progress limit-progress">
+                    <div class="progress-bar progress-bar-shared" role="progressbar" 
+                         style="width: {{ (used_amount / total_limit * 100)|round|int }}%;" 
+                         aria-valuenow="{{ used_amount }}" aria-valuemin="0" aria-valuemax="{{ total_limit }}">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span>사용률 {{ (used_amount / total_limit * 100)|round(1) }}%</span>
+                    <span>해당 항목: 주택지원, 의료비지원, 복지연금</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="container pb-5">
+    <div class="row mb-3">
+        <div class="col-12 text-center">
+            <h4 class="fw-bold"><i class="bi bi-grid-fill text-primary me-2"></i>복지 항목 선택</h4>
+            <p class="text-muted small">항목별 한도 금액을 확인 후 신청해 주세요.</p>
+        </div>
+    </div>
     <div class="row g-4">
-        <!-- Corrected Card Titles to match backend categories -->
+        <!-- 1. 주택지원 -->
         <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/housing'">
+            <div class="card menu-card p-3 text-center border-primary shadow-sm" onclick="location.href='/apply/housing'">
+                <div class="shared-limit-badge">통합한도 대상</div>
                 <div class="icon-box"><i class="bi bi-house-door"></i></div>
                 <h5 class="card-title">주택지원</h5>
-                <p class="card-text">임차 및 구입비용 이자 지원</p>
+                <p class="card-text">구입비용 이자 지원</p>
             </div>
         </div>
 
+        <!-- 2. 복지연금 -->
         <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/pension'">
+            <div class="card menu-card p-3 text-center border-primary shadow-sm" onclick="location.href='/apply/pension'">
+                <div class="shared-limit-badge">통합한도 대상</div>
                 <div class="icon-box"><i class="bi bi-piggy-bank"></i></div>
                 <h5 class="card-title">복지연금</h5>
-                <p class="card-text">개인연금 본인부담금 지원</p>
+                <p class="card-text">개인연금 납입금 지원</p>
             </div>
         </div>
 
+        <!-- 3. 의료비지원 -->
         <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/medical'">
+            <div class="card menu-card p-3 text-center border-primary shadow-sm" onclick="location.href='/apply/medical'">
+                <div class="shared-limit-badge">통합한도 대상</div>
                 <div class="icon-box"><i class="bi bi-hospital"></i></div>
                 <h5 class="card-title">의료비지원</h5>
-                <p class="card-text">본인 및 직계가족 의료비</p>
+                <p class="card-text">본인 및 가족 의료비</p>
             </div>
         </div>
 
+        <!-- 4. 경조비지원 -->
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card menu-card p-3 text-center" onclick="location.href='/apply/congratulation'">
                 <div class="icon-box"><i class="bi bi-envelope-heart"></i></div>
                 <h5 class="card-title">경조비지원</h5>
-                <p class="card-text">결혼, 출산, 회갑 등 경조사</p>
+                <p class="card-text">결혼, 출산, 회갑 등</p>
+                <div class="monthly-limit-badge text-start">
+                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
+                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('경조비지원', 0)) }}원</span></div>
+                </div>
             </div>
         </div>
 
+        <!-- 5. 생활복지지원 -->
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card menu-card p-3 text-center" onclick="location.href='/apply/life_welfare'">
                 <div class="icon-box"><i class="bi bi-gift"></i></div>
                 <h5 class="card-title">생활복지지원</h5>
-                <p class="card-text">학원 수강료 등 기타 복지</p>
+                <p class="card-text">학원 수강료 등 복지</p>
+                <div class="monthly-limit-badge text-start">
+                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
+                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('생활복지지원', 0)) }}원</span></div>
+                </div>
             </div>
         </div>
 
+        <!-- 6. 장학금지원 -->
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card menu-card p-3 text-center" onclick="location.href='/apply/scholarship'">
                 <div class="icon-box"><i class="bi bi-mortarboard"></i></div>
                 <h5 class="card-title">장학금지원</h5>
-                <p class="card-text">자녀 학자금 및 등록금 지원</p>
+                <p class="card-text">자녀 학자금 및 등록금</p>
+                <div class="monthly-limit-badge text-start">
+                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
+                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('장학금지원', 0)) }}원</span></div>
+                </div>
             </div>
         </div>
 
+        <!-- 7. 선진산업시찰 -->
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card menu-card p-3 text-center" onclick="location.href='/apply/inspection'">
                 <div class="icon-box"><i class="bi bi-airplane"></i></div>
                 <h5 class="card-title">선진산업시찰</h5>
-                <p class="card-text">퇴직예정자 산업시찰 지원</p>
+                <p class="card-text">산업시찰 경비 지원</p>
+                <div class="monthly-limit-badge text-start">
+                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
+                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('선진산업시찰', 0)) }}원</span></div>
+                </div>
             </div>
         </div>
 
+        <!-- 8. 모성보호지원 -->
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card menu-card p-3 text-center" onclick="location.href='/apply/maternity'">
                 <div class="icon-box"><i class="bi bi-gender-female"></i></div>
                 <h5 class="card-title">모성보호지원</h5>
-                <p class="card-text">임신 및 난임치료비 지원</p>
+                <p class="card-text">임신 및 난임치료비</p>
+                <div class="monthly-limit-badge text-start">
+                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
+                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('모성보호지원', 0)) }}원</span></div>
+                </div>
             </div>
         </div>
 
+        <!-- 9. 다자녀가정지원 -->
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card menu-card p-3 text-center" onclick="location.href='/apply/multichild'">
                 <div class="icon-box"><i class="bi bi-people"></i></div>
                 <h5 class="card-title">다자녀가정지원</h5>
-                <p class="card-text">미취학 자녀 양육비 지원</p>
+                <p class="card-text">미취학 자녀 양육비</p>
+                <div class="monthly-limit-badge text-start">
+                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
+                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('다자녀가정지원', 0)) }}원</span></div>
+                </div>
             </div>
         </div>
 
+        <!-- 10. 위로금지원 -->
         <div class="col-6 col-md-4 col-lg-3">
             <div class="card menu-card p-3 text-center" onclick="location.href='/apply/solace'">
                 <div class="icon-box"><i class="bi bi-heart-pulse"></i></div>
                 <h5 class="card-title">위로금지원</h5>
-                <p class="card-text">중증질환 및 영구장애 판정</p>
+                <p class="card-text">질병 및 장애 위로금</p>
+                <div class="monthly-limit-badge text-start">
+                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
+                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('위로금지원', 0)) }}원</span></div>
+                </div>
             </div>
         </div>
 
+    </div>
+    
+    <div class="text-center mt-5">
+        <a href="/my_status" class="btn btn-outline-primary btn-lg rounded-pill px-5 fw-bold">
+            <i class="bi bi-file-earmark-text"></i> 내 신청 현황 및 결과 보기
+        </a>
     </div>
 </div>
 

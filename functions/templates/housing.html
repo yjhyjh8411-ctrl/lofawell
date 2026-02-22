@@ -66,7 +66,7 @@
             <div class="col-md-6">
                 <label class="fw-bold small text-success">신청 금액</label>
                 <div class="input-group">
-                    <input type="number" name="amount" class="form-control fw-bold text-end" value="{{ data.신청금액 if data else '' }}" required>
+                    <input type="number" name="amount" class="form-control fw-bold text-end" value="{{ data.amount if data.amount else (data.신청금액 if data.신청금액 else '') }}" required>
                     <span class="input-group-text bg-white">원</span>
                 </div>
             </div>
@@ -74,7 +74,7 @@
 
             <div class="col-md-6">
                 <label class="fw-bold small">지급 계좌 (은행/계좌번호/예금주)</label>
-                <input type="text" name="account" class="form-control" value="{{ data.계좌번호 if data else '' }}" placeholder="은행/계좌번호/예금주" required>
+                <input type="text" name="account" class="form-control" value="{{ data.account if data.account else (data.계좌번호 if data.계좌번호 else '') }}" placeholder="은행/계좌번호/예금주" required>
             </div>
             
             <div class="col-12 mt-3">
@@ -89,6 +89,28 @@
         <div class="info-box mb-4">
             <i class="bi bi-info-circle-fill"></i> 
             <b>안내사항:</b> 주택지원 신청의 경우 관련 계약서 사본 등 증빙 자료를 반드시 스캔하여 첨부해 주시기 바랍니다.
+        </div>
+
+        <div class="section-title">3. 개인정보 수집 및 이용 동의</div>
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-body bg-light small" style="max-height: 150px; overflow-y: auto;">
+                <p class="fw-bold mb-1">[개인정보 수집 및 이용에 대한 동의]</p>
+                <p class="mb-2">LOFA 사내근로복지기금 지원 신청과 관련하여 아래와 같이 귀하의 개인정보를 수집 및 이용하고자 합니다.</p>
+                <ul class="mb-2">
+                    <li><strong>수집항목:</strong> 성명, 사번, 부서, 직급, 전화번호, 입사일, 계좌번호, 신청 금액 및 사유, 증빙서류 내 포함된 개인정보</li>
+                    <li><strong>수집목적:</strong> 복지기금 지원 대상 확인, 지급 심사 및 처리, 결과 통지, 기금 운영 통계 분석</li>
+                    <li><strong>보유 및 이용기간:</strong> 복지기금 운영 규정 및 관련 법령(근로복지기본법 등)에 따른 보존 기간 종료 시까지</li>
+                </ul>
+                <p class="mb-0 text-muted">※ 귀하는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다. 다만, 동의를 거부할 경우 복지기금 지원 신청 및 지급이 제한될 수 있습니다.</p>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacy_consent" required>
+                    <label class="form-check-label fw-bold" for="privacyConsent">
+                        위의 개인정보 수집 및 이용에 동의합니다. (필수)
+                    </label>
+                </div>
+            </div>
         </div>
 
         <div class="d-grid gap-2">
