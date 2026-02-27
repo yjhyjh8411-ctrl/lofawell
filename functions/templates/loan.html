@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>대부신청서 - LOFA 복지기금</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+body{background:#edf2f7;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;}
+.page-wrapper{max-width:900px;margin:0 auto;padding:24px 16px 60px;}
+.form-card{border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(15,45,82,.14);}
+.form-card-header{background:linear-gradient(135deg,#0f2d52 0%,#1d6fa4 100%);color:#fff;padding:30px 40px 26px;position:relative;overflow:hidden;}
+.form-card-header::before{content:'';position:absolute;width:220px;height:220px;background:rgba(255,255,255,.05);border-radius:50%;top:-70px;right:-50px;}
+.form-card-header::after{content:'';position:absolute;width:120px;height:120px;background:rgba(255,255,255,.04);border-radius:50%;bottom:-40px;right:90px;}
+.cat-badge{background:rgba(255,255,255,.22);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.08em;padding:3px 13px;border-radius:20px;display:inline-block;margin-bottom:9px;position:relative;z-index:1;}
+.form-card-header h2{font-size:1.5rem;font-weight:800;margin:0;position:relative;z-index:1;}
+.form-card-header p{margin:7px 0 0;opacity:.85;font-size:.87rem;position:relative;z-index:1;}
+.form-card-body{background:#fff;padding:34px 40px;}
+.section-block{border:1.5px solid #e2e8f0;border-radius:12px;padding:20px 22px;margin-bottom:20px;background:#fafcff;}
+.section-heading{font-size:.9rem;font-weight:700;color:#0f2d52;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.sec-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#1d6fa4;color:#fff;border-radius:50%;font-size:.72rem;font-weight:800;flex-shrink:0;}
+.form-label{font-weight:600;font-size:.845rem;color:#374151;margin-bottom:5px;}
+.form-control,.form-select{border:1.5px solid #d1d5db;border-radius:8px;padding:9px 13px;font-size:.895rem;color:#111827;transition:border-color .18s,box-shadow .18s;}
+.form-control:focus,.form-select:focus{border-color:#1d6fa4;box-shadow:0 0 0 3px rgba(29,111,164,.12);outline:none;}
+.form-control[readonly]{background:#f3f6f9!important;color:#6b7280;cursor:default;border-color:#e5e7eb;}
+.input-group-text{border:1.5px solid #d1d5db;background:#f3f6f9;color:#4b5563;font-size:.87rem;}
+.input-group>.form-control:not(:last-child){border-right:0;border-radius:8px 0 0 8px;}
+.input-group>.input-group-text:last-child{border-left:0;border-radius:0 8px 8px 0;}
+.input-group>.input-group-text:first-child{border-right:0;border-radius:8px 0 0 8px;}
+.input-group>.form-control:not(:first-child){border-radius:0 8px 8px 0;}
+.amount-field{font-size:1.08rem;font-weight:700;color:#0f2d52;text-align:right;}
+.info-callout{background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:13px 17px;font-size:.845rem;color:#1e3a8a;line-height:1.6;}
+.agreement-block{border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:0;}
+.agreement-body{padding:15px 18px;max-height:200px;overflow-y:auto;font-size:.81rem;color:#4b5563;line-height:1.75;background:#f8fafc;white-space:pre-wrap;}
+.agreement-footer{background:#fff;padding:13px 18px;border-top:1px solid #e2e8f0;}
+.pledge-block{border:2px solid #cbd5e1;border-radius:12px;padding:24px;background:#fff;}
+.pledge-title{text-align:center;font-weight:800;font-size:1.05rem;color:#0f2d52;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #e2e8f0;}
+.btn-lofa{background:linear-gradient(135deg,#0f2d52,#1d6fa4);border:none;color:#fff;border-radius:10px;padding:13px 20px;font-weight:700;font-size:.95rem;letter-spacing:.02em;transition:all .2s;}
+.btn-lofa:hover{background:linear-gradient(135deg,#0a2040,#1558a0);color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(15,45,82,.22);}
+.btn-back-lofa{border:1.5px solid #d1d5db;color:#4b5563;background:#fff;border-radius:10px;padding:12px 20px;font-weight:600;font-size:.87rem;transition:all .18s;}
+.btn-back-lofa:hover{background:#f3f6f9;border-color:#9ca3af;color:#374151;}
+.form-check-input:checked{background-color:#1d6fa4;border-color:#1d6fa4;}
+.acct-group{display:grid;grid-template-columns:1.4fr 1.7fr 1fr;gap:8px;}
+.radio-group{display:flex;flex-wrap:wrap;gap:16px;padding:6px 0;}
+.radio-group .form-check{display:flex;align-items:center;gap:6px;margin:0;padding:0;}
+.radio-group .form-check-input{margin:0;flex-shrink:0;}
+.back-nav{margin-bottom:16px;}
+@media(max-width:600px){.form-card-header{padding:22px 18px;}.form-card-body{padding:22px 18px;}.acct-group{grid-template-columns:1fr;}.radio-group{flex-direction:column;gap:8px;}}
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+  <div class="back-nav">
+    <a href="/main" class="btn btn-sm btn-back-lofa"><i class="bi bi-chevron-left"></i> 메인으로</a>
+  </div>
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="cat-badge">한국지방재정공제회 사내근로복지기금</div>
+      <h2><i class="bi bi-cash-coin"></i> 사내근로복지기금 대부신청서</h2>
+      <p>주택자금 및 생활안정 대부 지원 신청 양식입니다.</p>
+    </div>
+    <div class="form-card-body">
+      <form id="loanForm" enctype="multipart/form-data">
+        <input type="hidden" name="app_id" value="{{ data.app_id if edit_mode else '' }}">
+        <input type="hidden" name="type" value="대부신청">
+
+        <!-- 1. 신청인 정보 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">1</span> 신청인 정보</div>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">성명</label><input type="text" name="user_name" class="form-control" value="{{ data.성명 if (data and data.성명) else user_name }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">사번</label><input type="text" name="user_id" class="form-control" value="{{ data.사번 if (data and data.사번) else user_id }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">부서</label><input type="text" name="user_dept" class="form-control" value="{{ data.부서 if (data and data.부서) else user_dept }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">직급</label><input type="text" name="position" class="form-control" value="{{ data.직급 if (data and data.직급) else '' }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">입사일</label><input type="text" name="joinDate" class="form-control" value="{{ data.입사일 if (data and data.입사일) else '' }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">전화번호</label><input type="text" name="phone" class="form-control" value="{{ data.전화번호 if (data and data.전화번호) else '' }}" readonly></div>
+          </div>
+        </div>
+
+        <!-- 2. 대부 신청 내용 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">2</span> 대부 신청 내용</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">대부 용도 <span class="text-danger">*</span></label>
+              <div class="radio-group">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="loan_usage" id="usage1" value="주택구입" {% if data and data.loan_usage == '주택구입' %}checked{% endif %} required>
+                  <label class="form-check-label" for="usage1">주택구입</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="loan_usage" id="usage2" value="주택임차" {% if data and data.loan_usage == '주택임차' %}checked{% endif %}>
+                  <label class="form-check-label" for="usage2">주택임차</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="loan_usage" id="usage3" value="생활안정" {% if data and data.loan_usage == '생활안정' %}checked{% endif %}>
+                  <label class="form-check-label" for="usage3">생활안정</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">세대주 여부 <span class="text-danger">*</span></label>
+              <div class="radio-group">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="is_householder" id="hh1" value="세대주" {% if data and data.is_householder == '세대주' %}checked{% endif %} required>
+                  <label class="form-check-label" for="hh1">세대주</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="is_householder" id="hh2" value="세대주아님" {% if data and data.is_householder == '세대주아님' %}checked{% endif %}>
+                  <label class="form-check-label" for="hh2">세대주아님</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">부양 자녀수 <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" name="children_count" class="form-control text-end" value="{{ data.children_count if data and data.children_count else '' }}" placeholder="0" min="0" required>
+                <span class="input-group-text">명</span>
+              </div>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">신청 금액 <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">₩</span>
+                <input type="text" id="amtDisp" class="form-control amount-field" placeholder="0" inputmode="numeric" required>
+                <span class="input-group-text">원</span>
+              </div>
+              <input type="hidden" name="amount" id="amount" value="{{ data.amount if data and data.amount else (data.신청금액 if data and data.신청금액 else 0) }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">지급 계좌번호 <span class="text-danger">*</span></label>
+              <div class="acct-group">
+                <select id="bankSel" class="form-select" onchange="syncAcct()" required><option value="">-- 은행 선택 --</option></select>
+                <input type="text" id="acctNum" class="form-control" placeholder="계좌번호 (숫자만)" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9\-]/g,'');syncAcct();" required>
+                <input type="text" id="acctHolder" class="form-control" placeholder="예금주" oninput="syncAcct();" required>
+              </div>
+              <input type="hidden" name="account" id="account" value="{{ data.account if data and data.account else (data.계좌번호 if data and data.계좌번호 else '') }}">
+              <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> 은행 선택 → 계좌번호 입력 → 예금주 입력</small>
+            </div>
+            <div class="col-12">
+              <label class="form-label">증빙서류 첨부 <small class="text-muted">(대부 용도 증빙 서류 등)</small></label>
+              <input type="file" name="attachment" class="form-control">
+              {% if edit_mode and data.첨부파일 %}
+              <div class="mt-2 small text-muted">기존 파일: <span class="fw-bold text-primary">{{ data.첨부파일 }}</span></div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 대부 이행 동의서 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">3</span> 대부 이행 동의서</div>
+          <div class="agreement-block">
+            <div class="agreement-body">상기 본인은 한국지방재정공제회 사내근로복지기금에서 시행하는 기금운영 규정 및 대부계획에 정해진 모든 조건을 수락하고 위 금액을 대부받았으므로 다음 사항을 성실히 이행할 것에 동의합니다.
+
+첫째, 다음과 같은 사유가 발생하였을 경우 기금법인의 요청에 따라 대부원금과 연체이자를 즉시 납부하겠음
+  1. 퇴직할 경우(사망·해임·파면 시 동일), 단, 이 경우에는 퇴직금 지급일로부터 5영업일까지 유예 가능
+  2. 대부금을 신청 목적 외의 용도로 사용한 것이 적발되었을 경우
+  3. 대부를 위해 제출한 서류 및 사유에 허위 기타 부정한 방법을 사용하였음이 적발된 경우
+  4. 본인의 귀책사유에 의해 대부이자의 납입이 3개월 이상 연체되었을 경우
+  5. 기타 기금운영규정 제8조 1항에 의거 이사회에서 대부금의 회수를 결정하였을 경우
+
+둘째, 기금운영규정에 의거 매월 급여 지급 시 월 이자를 급여 공제하여 납부하는 것에 동의하며, 급여 공제 납부가 불가한 사정이 있을 시 매월 급여일까지 월간 이자를 납입하겠음
+
+셋째, 퇴직 시 대부금 미상환액이 남아있는 경우 퇴직금에서 공제하여 납부하고 대부 잔액이 퇴직금을 초과하는 경우 퇴직금 지급을 유예할 것에 동의함</div>
+            <div class="agreement-footer">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="loanAgreement" name="loan_agreement" required>
+                <label class="form-check-label fw-bold" for="loanAgreement">위 대부 이행 사항을 확인하였으며 이에 동의합니다. <span class="text-danger">(필수)</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 무주택·1주택 서약서 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">4</span> 무주택·1주택 서약서</div>
+          <div class="pledge-block">
+            <div class="pledge-title">무주택·1주택 서약서</div>
+            <div class="row g-3 mb-4">
+              <div class="col-md-3"><label class="form-label">성명</label><input type="text" class="form-control" value="{{ data.성명 if (data and data.성명) else user_name }}" readonly></div>
+              <div class="col-md-3"><label class="form-label">사번</label><input type="text" class="form-control" value="{{ data.사번 if (data and data.사번) else user_id }}" readonly></div>
+              <div class="col-md-3"><label class="form-label">소속부서</label><input type="text" class="form-control" value="{{ data.부서 if (data and data.부서) else user_dept }}" readonly></div>
+              <div class="col-md-3"><label class="form-label">전화번호</label><input type="text" class="form-control" value="{{ data.전화번호 if (data and data.전화번호) else '' }}" readonly></div>
+              <div class="col-md-6">
+                <label class="form-label">주택구입(임차)지역 <span class="text-danger">*</span></label>
+                <input type="text" name="housing_area" class="form-control" value="{{ data.housing_area if data and data.housing_area else '' }}" placeholder="예: 서울특별시 마포구" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">주소 <span class="text-danger">*</span></label>
+                <input type="text" name="address" class="form-control" value="{{ data.address if data and data.address else '' }}" placeholder="상세 주소를 입력하세요" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">무주택기간(1주택기간) <span class="text-danger">*</span></label>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="number" name="homeless_years" class="form-control text-end" value="{{ data.homeless_years if data and data.homeless_years else '' }}" style="width:90px;" min="0" placeholder="0" required>
+                  <span class="text-muted small fw-bold">년</span>
+                  <input type="number" name="homeless_months" class="form-control text-end" value="{{ data.homeless_months if data and data.homeless_months else '' }}" style="width:90px;" min="0" max="11" placeholder="0" required>
+                  <span class="text-muted small fw-bold">개월</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">기간 설정 <span class="text-danger">*</span></label>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="month" name="homeless_start" class="form-control" value="{{ data.homeless_start if data and data.homeless_start else '' }}" required>
+                  <span class="text-muted small fw-bold">~</span>
+                  <input type="month" name="homeless_end" class="form-control" value="{{ data.homeless_end if data and data.homeless_end else '' }}" required>
+                </div>
+              </div>
+            </div>
+            <div class="info-callout mb-3" style="font-size:.8rem;">
+              상기 본인은 주택자금 대부를 신청함에 있어서 본인 및 부양가족 전원이 주택자금 대부 신청일 기준으로 지정한 기간 동안 무주택자(1주택자)임을 서약합니다.<br>
+              (무주택 기산일은 만 30세가 된 날 혹은 혼인신고를 한 날 중 빠른 날)<br><br>
+              만일 대부 이후 위 기간 내에 본인 및 부양가족 중 1인이라도 주택을 소유한 사실이 판명되었을 시 대부 취소 및 대부금 환수 처리에 대해 이의를 제기하지 아니할 것이며, 대부받은 금액(규정에 따른 연체이자 포함)을 즉시 일시 상환할 것을 서약합니다. 만약 일시적으로 2주택을 소유하게 된 경우 지원일로부터 1년 이내에 반드시 1주택을 매도할 것이며, 그러지 못할 경우 기금운영규정에 따라 대부받은 원리금과 연체이자를 납부하겠습니다.
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="pledgeAgreement" name="pledge_agreement" required>
+              <label class="form-check-label fw-bold" for="pledgeAgreement">위 서약 내용을 확인하였으며 이에 동의합니다. <span class="text-danger">(필수)</span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. 개인정보 동의 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">5</span> 개인정보 수집 및 이용 동의</div>
+          <div class="agreement-block">
+            <div class="agreement-body">
+              <p class="fw-bold mb-2">[개인정보 수집 및 이용에 대한 동의]</p>
+              <p class="mb-2">LOFA 사내근로복지기금 지원 신청과 관련하여 아래와 같이 귀하의 개인정보를 수집 및 이용하고자 합니다.</p>
+              <ul class="mb-2 ps-3">
+                <li><strong>수집항목:</strong> 성명, 사번, 부서, 직급, 전화번호, 입사일, 계좌번호, 신청 금액 및 사유, 증빙서류 내 포함된 개인정보</li>
+                <li><strong>수집목적:</strong> 복지기금 지원 대상 확인, 지급 심사 및 처리, 결과 통지, 기금 운영 통계 분석</li>
+                <li><strong>보유 및 이용기간:</strong> 복지기금 운영 규정 및 관련 법령(근로복지기본법 등)에 따른 보존 기간 종료 시까지</li>
+              </ul>
+              <p class="mb-0 fst-italic text-muted">※ 동의 거부 시 복지기금 신청 및 지급이 제한될 수 있습니다.</p>
+            </div>
+            <div class="agreement-footer">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacy_consent" required>
+                <label class="form-check-label fw-bold" for="privacyConsent">위의 개인정보 수집 및 이용에 동의합니다. <span class="text-danger">(필수)</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="d-grid gap-2 mt-3">
+          <button type="submit" class="btn btn-lofa btn-lg">
+            {% if edit_mode %}<i class="bi bi-check2-circle"></i> 수정 완료 및 재제출{% else %}<i class="bi bi-cash-coin"></i> 대부 신청하기{% endif %}
+          </button>
+          <a href="/my_status" class="btn btn-back-lofa text-center">목록으로 돌아가기</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const BANKS=['KB국민은행','신한은행','우리은행','하나은행','NH농협은행','IBK기업은행','카카오뱅크','토스뱅크','SC제일은행','씨티은행','대구은행','부산은행','광주은행','전북은행','경남은행','제주은행','KDB산업은행','수협은행','새마을금고','신협','우체국','iM뱅크(구DGB)','기타'];
+
+function initBankSelect(){
+  const sel=document.getElementById('bankSel');
+  if(!sel)return;
+  BANKS.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);});
+}
+
+function syncAcct(){
+  const b=(document.getElementById('bankSel')||{value:''}).value;
+  const n=(document.getElementById('acctNum')||{value:''}).value;
+  const h=(document.getElementById('acctHolder')||{value:''}).value;
+  const hidden=document.getElementById('account');
+  const cleanAcct=n.replace(/[^0-9]/g,'');
+  if(hidden)hidden.value=(b&&cleanAcct&&h)?`${b}/${cleanAcct}/${h.trim()}`:'';
+}
+
+function loadAcct(str){
+  if(!str)return;
+  const p=str.split('/');
+  const sel=document.getElementById('bankSel');
+  if(sel&&p[0]){sel.value=p[0];if(!sel.value){const o=new Option(p[0],p[0],true,true);sel.appendChild(o);sel.value=p[0];}}
+  const num=document.getElementById('acctNum');if(num&&p[1])num.value=p[1];
+  const holder=document.getElementById('acctHolder');if(holder&&p[2])holder.value=p[2];
+  syncAcct();
+}
+
+function initAmt(){
+  const disp=document.getElementById('amtDisp');
+  const hidden=document.getElementById('amount');
+  if(!disp||!hidden)return;
+  const v=parseInt(hidden.value||'0');
+  if(v)disp.value=v.toLocaleString('ko-KR');
+  disp.addEventListener('input',function(){
+    const r=this.value.replace(/[^0-9]/g,'');
+    this.value=r?parseInt(r).toLocaleString('ko-KR'):'';
+    hidden.value=r||'0';
+  });
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  initBankSelect();
+  loadAcct('{{ (data.account or data.계좌번호 or "")|e }}');
+  initAmt();
+});
+
+document.getElementById('loanForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  try{
+    const res=await fetch('/submit',{method:'POST',body:fd});
+    if(!res.ok)throw new Error(`서버 오류(${res.status})`);
+    const r=await res.json();
+    if(r.status==='success'){alert(r.message||'대부 신청서가 정상적으로 제출되었습니다.');window.location.href='/my_status';}
+    else alert('오류: '+r.message);
+  }catch(err){alert('제출 오류: '+err.message);}
+});
+</script>
+</body>
+</html>

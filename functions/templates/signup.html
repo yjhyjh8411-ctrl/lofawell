@@ -40,12 +40,24 @@
             </div>
             <div class="col">
                 <label class="form-label fw-bold">직급</label>
-                <input type="text" name="position" class="form-control" placeholder="예: 차장" required>
+                <select name="position" class="form-select" required>
+                    <option value="">-- 선택 --</option>
+                    <option value="사원">사원</option>
+                    <option value="주임">주임</option>
+                    <option value="대리">대리</option>
+                    <option value="과장">과장</option>
+                    <option value="차장">차장</option>
+                    <option value="부장">부장</option>
+                    <option value="팀장">팀장</option>
+                    <option value="처장">처장</option>
+                    <option value="이사">이사</option>
+                    <option value="기타">기타</option>
+                </select>
             </div>
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">핸드폰 번호</label>
-            <input type="text" name="phone" class="form-control" placeholder="010-0000-0000" required>
+            <input type="text" id="phoneInput" name="phone" class="form-control" placeholder="010-0000-0000" inputmode="numeric" maxlength="13" required>
         </div>
         <div class="mb-3">
             <label class="form-label fw-bold">부서명</label>
@@ -93,6 +105,18 @@
 </div>
 
 <script>
+    // 전화번호 자동 포맷 (010-XXXX-XXXX)
+    document.getElementById('phoneInput').addEventListener('input', function() {
+        let v = this.value.replace(/[^0-9]/g, '');
+        if (v.length <= 3) {
+            this.value = v;
+        } else if (v.length <= 7) {
+            this.value = v.slice(0,3) + '-' + v.slice(3);
+        } else {
+            this.value = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
+        }
+    });
+
     const pw1 = document.getElementById('pw1');
     const pw2 = document.getElementById('pw2');
     const msg = document.getElementById('pwMatchMsg');

@@ -21,7 +21,28 @@ A web-based welfare fund management system for LOFA employees. It allows users t
 - **Site Content Management:** Added "Rules (Regulations)" and "Announcements" sections to the login page.
 - **Personal Information Consent:** Added a mandatory "Personal Information Collection and Use Consent" section to all application forms and the signup page to comply with South Korean regulations.
 - **Admin Settings Dashboard:** Admins can now update the Rules and Announcements directly from the Admin page, which updates the login page in real-time.
+- **Loan Application (대부신청):** A new comprehensive loan application feature with integrated repayment agreements and a homelessness/single-house ownership pledge (무주택·1주택 서약서).
+- **UI Standardization:** Standardized the appearance of "Cultural Activity", "Loan Application", and "Regular Vaccination" cards on the main page for visual consistency.
+- **Loan Status Label Update:** Changed "Status" (현황) to "Approved Amount" (승인된 금액) in the "Loan Application" (대부신청) card to match other welfare items.
 
 ## Detailed Feature List
-...
+1. **Welfare Support Items (New Order):**
+   - Housing Support (주택지원)
+   - Welfare Pension (복지연금)
+   - Medical Expenses (의료비지원)
+   - Life Welfare Support (생활복지지원)
+   - Cultural Activity (문화활동비)
+   - **Loan Application (대부신청)**
+   - **Congratulatory/Condolence Support (경조비지원):** A new application for events like weddings, funerals, etc.
+   - Regular Vaccination (정기예방접종)
+   - Scholarship (장학금지원)
+   - Multi-child Family Support (다자녀가정지원)
+   - Advanced Industrial Inspection (선진산업시찰)
+   - Maternity Protection (모성보호지원)
+   - Solace Money (위로금지원)
+
+2. **Loan Application Details:**
+   - Fields: Loan use, Householder status, Number of children, Amount, Account number.
+   - Legal Agreements: Repayment terms on retirement, misuse, etc.
+   - Homeless/Single-house Pledge: Detailed pledge for housing-related loans.
 

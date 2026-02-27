@@ -68,8 +68,22 @@
         </div>
 
         <div class="mb-4">
-            <label class="fw-bold mb-1 small">지급 계좌번호 (은행/번호/예금주)</label>
-            <input type="text" name="account" class="form-control" value="{{ data.account if data.account else (data.계좌번호 if data.계좌번호 else '') }}" placeholder="은행/계좌번호/예금주" required>
+            <label class="fw-bold mb-1 small">지급 계좌번호 <span class="text-danger">*</span></label>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <select id="bankSel" class="form-select" onchange="syncAcct()" required>
+                        <option value="">-- 은행 선택 --</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="acctNum" class="form-control" placeholder="계좌번호 (숫자만)" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'');syncAcct();" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="acctHolder" class="form-control" placeholder="예금주" oninput="syncAcct();" required>
+                </div>
+            </div>
+            <input type="hidden" name="account" id="account" value="{{ data.account if data.account else (data.계좌번호 if data.계좌번호 else '') }}">
+            <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> 은행 선택 → 계좌번호 입력 → 예금주 입력</small>
         </div>
 
         <div class="section-title">3. 증빙서류 첨부</div>
@@ -120,6 +134,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const BANKS=['KB국민은행','신한은행','우리은행','하나은행','NH농협은행','IBK기업은행','카카오뱅크','토스뱅크','SC제일은행','씨티은행','대구은행','부산은행','광주은행','전북은행','경남은행','제주은행','KDB산업은행','수협은행','새마을금고','신협','우체국','iM뱅크(구DGB)','기타'];
+    function initBankSelect(){const sel=document.getElementById('bankSel');if(!sel)return;BANKS.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);});}
+    function syncAcct(){const b=(document.getElementById('bankSel')||{value:''}).value;const n=(document.getElementById('acctNum')||{value:''}).value;const h=(document.getElementById('acctHolder')||{value:''}).value;const hidden=document.getElementById('account');const cleanAcct=n.replace(/[^0-9]/g,'');if(hidden)hidden.value=(b&&cleanAcct&&h)?`${b}/${cleanAcct}/${h.trim()}`:''; }
+    function loadAcct(str){if(!str)return;const p=str.split('/');const sel=document.getElementById('bankSel');if(sel&&p[0]){sel.value=p[0];if(!sel.value){const o=new Option(p[0],p[0],true,true);sel.appendChild(o);sel.value=p[0];}}const num=document.getElementById('acctNum');if(num&&p[1])num.value=p[1];const holder=document.getElementById('acctHolder');if(holder&&p[2])holder.value=p[2];syncAcct();}
+
     // 진료 내역 줄 추가 함수
     function addRow(hospital = '', date = '', price = '') {
         const container = document.getElementById('rowContainer');
@@ -145,6 +164,8 @@
 
     // 페이지 로딩 시 기존 데이터 복구
     window.onload = function() {
+        initBankSelect();
+        loadAcct(`{{ data.account if data and data.account else (data.계좌번호 if data and data.계좌번호 else '') }}`);
         const rawDetail = `{{ data.detail if data.detail else (data.세부내용 if data.세부내용 else '') }}`;
         if (rawDetail) {
             if (rawDetail.includes('||')) {

@@ -1,160 +1,221 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>모성보호 지원 신청 - LOFA</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <style>
-        body { background-color: #f4f7f9; padding: 40px 0; font-family: 'Malgun Gothic', sans-serif; }
-        .form-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
-        .header-line { border-left: 5px solid #fd79a8; padding-left: 15px; margin-bottom: 30px; }
-        .section-title { font-size: 1.1rem; font-weight: bold; color: #d63031; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 5px; }
-        .info-text { background-color: #fff5f7; border-radius: 10px; padding: 15px; font-size: 0.9rem; color: #444; border: 1px solid #fab1a0; }
-        .confidential-box { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; font-size: 0.85rem; color: #636e72; line-height: 1.6; }
-    </style>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>모성보호 지원 신청서 - LOFA 복지기금</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+body{background:#edf2f7;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;}
+.page-wrapper{max-width:900px;margin:0 auto;padding:24px 16px 60px;}
+.form-card{border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(15,45,82,.14);}
+.form-card-header{background:linear-gradient(135deg,#0f2d52 0%,#1d6fa4 100%);color:#fff;padding:30px 40px 26px;position:relative;overflow:hidden;}
+.form-card-header::before{content:'';position:absolute;width:220px;height:220px;background:rgba(255,255,255,.05);border-radius:50%;top:-70px;right:-50px;}
+.form-card-header::after{content:'';position:absolute;width:120px;height:120px;background:rgba(255,255,255,.04);border-radius:50%;bottom:-40px;right:90px;}
+.cat-badge{background:rgba(255,255,255,.22);color:#fff;font-size:.72rem;font-weight:700;letter-spacing:.08em;padding:3px 13px;border-radius:20px;display:inline-block;margin-bottom:9px;position:relative;z-index:1;}
+.form-card-header h2{font-size:1.5rem;font-weight:800;margin:0;position:relative;z-index:1;}
+.form-card-header p{margin:7px 0 0;opacity:.85;font-size:.87rem;position:relative;z-index:1;}
+.form-card-body{background:#fff;padding:34px 40px;}
+.section-block{border:1.5px solid #e2e8f0;border-radius:12px;padding:20px 22px;margin-bottom:20px;background:#fafcff;}
+.section-heading{font-size:.9rem;font-weight:700;color:#0f2d52;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.sec-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#1d6fa4;color:#fff;border-radius:50%;font-size:.72rem;font-weight:800;flex-shrink:0;}
+.form-label{font-weight:600;font-size:.845rem;color:#374151;margin-bottom:5px;}
+.form-control,.form-select{border:1.5px solid #d1d5db;border-radius:8px;padding:9px 13px;font-size:.895rem;color:#111827;transition:border-color .18s,box-shadow .18s;}
+.form-control:focus,.form-select:focus{border-color:#1d6fa4;box-shadow:0 0 0 3px rgba(29,111,164,.12);outline:none;}
+.form-control[readonly]{background:#f3f6f9!important;color:#6b7280;cursor:default;border-color:#e5e7eb;}
+.input-group-text{border:1.5px solid #d1d5db;background:#f3f6f9;color:#4b5563;font-size:.87rem;}
+.input-group>.form-control:not(:last-child){border-right:0;border-radius:8px 0 0 8px;}
+.input-group>.input-group-text:last-child{border-left:0;border-radius:0 8px 8px 0;}
+.input-group>.input-group-text:first-child{border-right:0;border-radius:8px 0 0 8px;}
+.input-group>.form-control:not(:first-child){border-radius:0 8px 8px 0;}
+.amount-field{font-size:1.08rem;font-weight:700;color:#0f2d52;text-align:right;}
+.info-callout{background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:13px 17px;font-size:.845rem;color:#1e3a8a;line-height:1.6;}
+.agreement-block{border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:0;}
+.agreement-body{padding:15px 18px;max-height:155px;overflow-y:auto;font-size:.81rem;color:#4b5563;line-height:1.65;background:#f8fafc;}
+.agreement-footer{background:#fff;padding:13px 18px;border-top:1px solid #e2e8f0;}
+.btn-lofa{background:linear-gradient(135deg,#0f2d52,#1d6fa4);border:none;color:#fff;border-radius:10px;padding:13px 20px;font-weight:700;font-size:.95rem;letter-spacing:.02em;transition:all .2s;}
+.btn-lofa:hover{background:linear-gradient(135deg,#0a2040,#1558a0);color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(15,45,82,.22);}
+.btn-back-lofa{border:1.5px solid #d1d5db;color:#4b5563;background:#fff;border-radius:10px;padding:12px 20px;font-weight:600;font-size:.87rem;transition:all .18s;}
+.btn-back-lofa:hover{background:#f3f6f9;border-color:#9ca3af;color:#374151;}
+.form-check-input:checked{background-color:#1d6fa4;border-color:#1d6fa4;}
+.acct-group{display:grid;grid-template-columns:1.4fr 1.7fr 1fr;gap:8px;}
+.back-nav{margin-bottom:16px;}
+@media(max-width:600px){.form-card-header{padding:22px 18px;}.form-card-body{padding:22px 18px;}.acct-group{grid-template-columns:1fr;}}
+  </style>
 </head>
 <body>
-<div class="container">
-    <div class="form-card shadow">
-        <div class="header-line">
-            <h2 class="fw-bold">{% if data and data.app_id %} 🤰 모성보호 지원 수정 {% else %} 🤰 모성보호 지원 신청서 {% endif %}</h2>
-            <p class="text-muted mb-0">임신 및 난임 치료 지원을 위한 임직원 전용 신청 양식입니다.</p>
+<div class="page-wrapper">
+  <div class="back-nav">
+    <a href="/main" class="btn btn-sm btn-back-lofa"><i class="bi bi-chevron-left"></i> 메인으로</a>
+  </div>
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="cat-badge">한국지방재정공제회 사내근로복지기금</div>
+      <h2><i class="bi bi-heart-pulse-fill"></i> 모성보호 지원 신청서</h2>
+      <p>임신 및 난임 치료 지원을 위한 임직원 전용 신청 양식입니다.</p>
+    </div>
+    <div class="form-card-body">
+      <form id="maternityForm" enctype="multipart/form-data">
+        <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
+        <input type="hidden" name="type" value="모성보호지원">
+
+        <!-- 1. 신청인 정보 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">1</span> 신청인 정보</div>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">성명</label><input type="text" name="user_name" class="form-control" value="{{ data.성명 if data else user_name }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">사번</label><input type="text" name="user_id" class="form-control" value="{{ data.사번 if data else user_id }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">부서</label><input type="text" name="user_dept" class="form-control" value="{{ data.부서 if data else user_dept }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">직급</label><input type="text" name="position" class="form-control" value="{{ data.직급 if data else '' }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">입사일</label><input type="text" name="joinDate" class="form-control" value="{{ data.입사일 if data else '' }}" readonly></div>
+            <div class="col-md-4"><label class="form-label">전화번호</label><input type="text" name="phone" class="form-control" value="{{ data.전화번호 if data else '' }}" readonly></div>
+          </div>
         </div>
 
-        <form id="maternityForm" enctype="multipart/form-data">
-            <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
-            <input type="hidden" name="type" value="모성보호지원">
-
-            <div class="section-title">1. 신청인 정보</div>
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <label class="fw-bold small">성명</label>
-                    <input type="text" name="user_name" class="form-control bg-light" value="{{ data.성명 if data else user_name }}" readonly>
-                </div>
-                <div class="col-md-4">
-                    <label class="fw-bold small">사번</label>
-                    <input type="text" name="user_id" class="form-control bg-light" value="{{ data.사번 if data else user_id }}" readonly>
-                </div>
-                <div class="col-md-4">
-                    <label class="fw-bold small">부서</label>
-                    <input type="text" name="user_dept" class="form-control bg-light" value="{{ data.부서 if data else user_dept }}" readonly>
-                </div>
-                <div class="col-md-4">
-                    <label class="fw-bold small">직급</label>
-                    <input type="text" name="position" class="form-control bg-light" value="{{ data.직급 if data else user_rank }}" readonly>
-                </div>
-                <div class="col-md-4">
-                    <label class="fw-bold small">입사일</label>
-                    <input type="text" name="joinDate" class="form-control bg-light" value="{{ data.입사일 if data else user_join_date }}" readonly>
-                </div>
-                <div class="col-md-4">
-                    <label class="fw-bold small">전화번호</label>
-                    <input type="text" name="phone" class="form-control bg-light" value="{{ data.전화번호 if data else '' }}" readonly required>
-                </div>
+        <!-- 2. 지원 신청 내용 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">2</span> 지원 신청 내용</div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">지원 항목 선택 <span class="text-danger">*</span></label>
+              <select name="target_name" class="form-select" required>
+                <option value="" disabled {% if not data or not data.target_name %}selected{% endif %}>항목을 선택하세요</option>
+                <option value="임신관련 지원" {% if data and (data.target_name == '임신관련 지원' or data.대상자성명 == '임신관련 지원') %}selected{% endif %}>임신 관련 지원</option>
+                <option value="난임 치료 지원" {% if data and (data.target_name == '난임 치료 지원' or data.대상자성명 == '난임 치료 지원') %}selected{% endif %}>난임 치료 지원</option>
+              </select>
             </div>
-
-            <div class="section-title">2. 지원 신청 내용</div>
-            <div class="row g-3">
-                <div class="col-md-12">
-                    <label class="form-label fw-bold small">지원 항목 선택</label>
-                    <select name="target_name" class="form-select" required>
-                        <option value="" disabled {% if not data or not data.target_name %}selected{% endif %}>항목을 선택하세요</option>
-                        <option value="임신관련 지원" {% if data and data.target_name == '임신관련 지원' or (data.대상자성명 == '임신관련 지원') %}selected{% endif %}>임신 관련 지원</option>
-                        <option value="난임 치료 지원" {% if data and data.target_name == '난임 치료 지원' or (data.대상자성명 == '난임 치료 지원') %}selected{% endif %}>난임 치료 지원</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small text-danger">신청 금액</label>
-                    <div class="input-group">
-                        <input type="number" name="amount" class="form-control fw-bold" value="{{ data.amount if data.amount else (data.신청금액 if data.신청금액 else 0) }}" required>
-                        <span class="input-group-text">원</span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">지급 계좌번호</label>
-                    <input type="text" name="account" class="form-control" value="{{ data.account if data.account else (data.계좌번호 if data.계좌번호 else '') }}" placeholder="은행명 및 계좌번호" required>
-                </div>
-
-                <div class="col-12 mt-3">
-                    <label class="form-label fw-bold small"><i class="bi bi-paperclip"></i> 증빙서류 첨부 (임신확인서, 난임진단서 등)</label>
-                    <input type="file" name="attachment" class="form-control">
-                    {% if data and data.첨부파일 %}
-                    <div class="mt-2 small text-muted">기존 파일: <span class="text-pink fw-bold" style="color:#fd79a8;">{{ data.첨부파일 }}</span></div>
-                    {% endif %}
-                </div>
+            <div class="col-12">
+              <label class="form-label">신청 금액 <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">₩</span>
+                <input type="text" id="amtDisp" class="form-control amount-field" placeholder="0" inputmode="numeric" required>
+                <span class="input-group-text">원</span>
+              </div>
+              <input type="hidden" name="amount" id="amount" value="{{ data.amount if data.amount else (data.신청금액 if data.신청금액 else 0) }}">
             </div>
-
-            <div class="section-title">3. 안내사항 및 규정</div>
-            <div class="info-text mb-3">
-                <i class="bi bi-file-earmark-medical"></i> <b>필수 증빙:</b> 사실 확인을 위한 증빙 서류를 반드시 스캔하여 첨부해 주세요.
+            <div class="col-12">
+              <label class="form-label">지급 계좌번호 <span class="text-danger">*</span></label>
+              <div class="acct-group">
+                <select id="bankSel" class="form-select" onchange="syncAcct()" required><option value="">-- 은행 선택 --</option></select>
+                <input type="text" id="acctNum" class="form-control" placeholder="계좌번호 (숫자만)" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9\-]/g,'');syncAcct();" required>
+                <input type="text" id="acctHolder" class="form-control" placeholder="예금주" oninput="syncAcct();" required>
+              </div>
+              <input type="hidden" name="account" id="account" value="{{ data.account if data.account else (data.계좌번호 if data.계좌번호 else '') }}">
+              <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> 은행 선택 → 계좌번호 입력 → 예금주 입력</small>
             </div>
-
-            <div class="confidential-box mb-4 shadow-sm">
-                <p class="mb-2 text-danger"><strong><i class="bi bi-shield-lock"></i> 기금운영규정 비밀유지 안내</strong></p>
-                <ul class="mb-0 small">
-                    <li>기금운영규정 제53조4항: 임신사실이 객관적으로 확인되어 지원이 이루어진 경우 지원금을 환수하지 않음</li>
-                    <li>기금운영규정 제59조: 업무관련자는 수행 과정에서 알게 된 정보를 절대 누설하여서는 안 됨</li>
-                </ul>
+            <div class="col-12">
+              <label class="form-label">증빙서류 첨부 <small class="text-muted">(임신확인서, 난임진단서 등)</small></label>
+              <input type="file" name="attachment" class="form-control">
+              {% if data and data.첨부파일 %}
+              <div class="mt-2 small text-muted">기존 파일: <span class="fw-bold text-primary">{{ data.첨부파일 }}</span></div>
+              {% endif %}
             </div>
-
-            <div class="section-title" style="color:#fd79a8; border-bottom: 2px solid #fd79a8;">3. 개인정보 수집 및 이용 동의</div>
-            <div class="card mb-4 border-0 shadow-sm">
-                <div class="card-body bg-light small" style="max-height: 150px; overflow-y: auto;">
-                    <p class="fw-bold mb-1">[개인정보 수집 및 이용에 대한 동의]</p>
-                    <p class="mb-2">LOFA 사내근로복지기금 지원 신청과 관련하여 아래와 같이 귀하의 개인정보를 수집 및 이용하고자 합니다.</p>
-                    <ul class="mb-2">
-                        <li><strong>수집항목:</strong> 성명, 사번, 부서, 직급, 전화번호, 입사일, 계좌번호, 신청 금액 및 사유, 증빙서류 내 포함된 개인정보</li>
-                        <li><strong>수집목적:</strong> 복지기금 지원 대상 확인, 지급 심사 및 처리, 결과 통지, 기금 운영 통계 분석</li>
-                        <li><strong>보유 및 이용기간:</strong> 복지기금 운영 규정 및 관련 법령(근로복지기본법 등)에 따른 보존 기간 종료 시까지</li>
-                    </ul>
-                    <p class="mb-0 text-muted">※ 귀하는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있습니다. 다만, 동의를 거부할 경우 복지기금 지원 신청 및 지급이 제한될 수 있습니다.</p>
-                </div>
-                <div class="card-footer bg-white border-top-0">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacy_consent" required>
-                        <label class="form-check-label fw-bold" for="privacyConsent">
-                            위의 개인정보 수집 및 이용에 동의합니다. (필수)
-                        </label>
-                    </div>
-                </div>
+            <div class="col-12">
+              <div class="info-callout">
+                <i class="bi bi-info-circle-fill me-1"></i> 사실 확인을 위한 증빙 서류를 반드시 첨부해 주세요.<br>
+                <small>※ 기금운영규정 제53조4항: 임신사실이 객관적으로 확인되어 지원이 이루어진 경우 지원금을 환수하지 않음<br>
+                ※ 기금운영규정 제59조: 업무관련자는 수행 과정에서 알게 된 정보를 절대 누설하여서는 안 됨</small>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-lg text-white shadow fw-bold" style="background-color: #fd79a8;">
-                    {% if data and data.app_id %} <i class="bi bi-check2-circle"></i> 모성보호 수정 완료 {% else %} <i class="bi bi-send-fill"></i> 모성보호 지원 신청 {% endif %}
-                </button>
-                <a href="/my_status" class="btn btn-outline-secondary">취소하고 돌아가기</a>
+        <!-- 3. 개인정보 동의 -->
+        <div class="section-block">
+          <div class="section-heading"><span class="sec-num">3</span> 개인정보 수집 및 이용 동의</div>
+          <div class="agreement-block">
+            <div class="agreement-body">
+              <p class="fw-bold mb-2">[개인정보 수집 및 이용에 대한 동의]</p>
+              <p class="mb-2">LOFA 사내근로복지기금 지원 신청과 관련하여 아래와 같이 귀하의 개인정보를 수집 및 이용하고자 합니다.</p>
+              <ul class="mb-2 ps-3">
+                <li><strong>수집항목:</strong> 성명, 사번, 부서, 직급, 전화번호, 입사일, 계좌번호, 신청 금액 및 사유, 증빙서류 내 포함된 개인정보</li>
+                <li><strong>수집목적:</strong> 복지기금 지원 대상 확인, 지급 심사 및 처리, 결과 통지, 기금 운영 통계 분석</li>
+                <li><strong>보유 및 이용기간:</strong> 복지기금 운영 규정 및 관련 법령(근로복지기본법 등)에 따른 보존 기간 종료 시까지</li>
+              </ul>
+              <p class="mb-0 fst-italic text-muted">※ 동의 거부 시 복지기금 신청 및 지급이 제한될 수 있습니다.</p>
             </div>
-        </form>
+            <div class="agreement-footer">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacy_consent" required>
+                <label class="form-check-label fw-bold" for="privacyConsent">위의 개인정보 수집 및 이용에 동의합니다. <span class="text-danger">(필수)</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="d-grid gap-2 mt-3">
+          <button type="submit" class="btn btn-lofa btn-lg">
+            {% if data and data.app_id %}<i class="bi bi-check2-circle"></i> 수정 완료 및 재제출{% else %}<i class="bi bi-send-fill"></i> 신청서 제출{% endif %}
+          </button>
+          <a href="/my_status" class="btn btn-back-lofa text-center">목록으로 돌아가기</a>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById('maternityForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
+const BANKS=['KB국민은행','신한은행','우리은행','하나은행','NH농협은행','IBK기업은행','카카오뱅크','토스뱅크','SC제일은행','씨티은행','대구은행','부산은행','광주은행','전북은행','경남은행','제주은행','KDB산업은행','수협은행','새마을금고','신협','우체국','iM뱅크(구DGB)','기타'];
 
-        try {
-            const res = await fetch('/submit', { method: 'POST', body: formData });
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`서버 응답 오류 (${res.status}): ${errorText.substring(0, 100)}`);
-            }
-            const result = await res.json();
-            
-            if(result.status === 'success') {
-                alert(result.message || '모성보호 지원 신청이 완료되었습니다.');
-                window.location.href = '/my_status';
-            } else {
-                alert('오류 발생: ' + result.message);
-            }
-        } catch (err) {
-            console.error('Submission error:', err);
-            alert('제출 중 오류가 발생했습니다: ' + err.message);
-        }
-    };
+function initBankSelect(){
+  const sel=document.getElementById('bankSel');
+  if(!sel)return;
+  BANKS.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o);});
+}
+
+function syncAcct(){
+  const b=(document.getElementById('bankSel')||{value:''}).value;
+  const n=(document.getElementById('acctNum')||{value:''}).value;
+  const h=(document.getElementById('acctHolder')||{value:''}).value;
+  const hidden=document.getElementById('account');
+  const cleanAcct=n.replace(/[^0-9]/g,'');
+  if(hidden)hidden.value=(b&&cleanAcct&&h)?`${b}/${cleanAcct}/${h.trim()}`:'';
+}
+
+function loadAcct(str){
+  if(!str)return;
+  const p=str.split('/');
+  const sel=document.getElementById('bankSel');
+  if(sel&&p[0]){sel.value=p[0];if(!sel.value){const o=new Option(p[0],p[0],true,true);sel.appendChild(o);sel.value=p[0];}}
+  const num=document.getElementById('acctNum');if(num&&p[1])num.value=p[1];
+  const holder=document.getElementById('acctHolder');if(holder&&p[2])holder.value=p[2];
+  syncAcct();
+}
+
+function initAmt(){
+  const disp=document.getElementById('amtDisp');
+  const hidden=document.getElementById('amount');
+  if(!disp||!hidden)return;
+  const v=parseInt(hidden.value||'0');
+  if(v)disp.value=v.toLocaleString('ko-KR');
+  disp.addEventListener('input',function(){
+    const r=this.value.replace(/[^0-9]/g,'');
+    this.value=r?parseInt(r).toLocaleString('ko-KR'):'';
+    hidden.value=r||'0';
+  });
+}
+
+async function doSubmit(formEl){
+  const fd=new FormData(formEl);
+  try{
+    const res=await fetch('/submit',{method:'POST',body:fd});
+    if(!res.ok)throw new Error(`서버 오류(${res.status})`);
+    const r=await res.json();
+    if(r.status==='success'){alert(r.message||'신청이 완료되었습니다.');window.location.href='/my_status';}
+    else alert('오류: '+r.message);
+  }catch(err){alert('제출 오류: '+err.message);}
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  initBankSelect();
+  loadAcct('{{ (data.account or data.계좌번호 or "")|e }}');
+  initAmt();
+});
+document.getElementById('maternityForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  await doSubmit(e.target);
+});
 </script>
 </body>
 </html>

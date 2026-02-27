@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>복지연금 지원 신청서 - LOFA 복지기금</title>
+  <title>정기예방접종 지원 신청서 - LOFA 복지기금</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
   <style>
@@ -51,13 +51,13 @@ body{background:#edf2f7;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-s
   <div class="form-card">
     <div class="form-card-header">
       <div class="cat-badge">한국지방재정공제회 사내근로복지기금</div>
-      <h2><i class="bi bi-piggy-bank-fill"></i> 복지연금 지원 신청서</h2>
-      <p>개인연금 및 퇴직연금 납입금 지원 신청 양식입니다.</p>
+      <h2><i class="bi bi-capsule-pill"></i> 정기예방접종 지원 신청서</h2>
+      <p>임직원 건강 증진을 위한 정기 예방접종 비용 지원 신청 양식입니다.</p>
     </div>
     <div class="form-card-body">
-      <form id="pensionForm" enctype="multipart/form-data">
+      <form id="vaccinationForm" enctype="multipart/form-data">
         <input type="hidden" name="app_id" value="{{ data.app_id if data and data.app_id else '' }}">
-        <input type="hidden" name="type" value="복지연금">
+        <input type="hidden" name="type" value="정기예방접종">
 
         <!-- 1. 신청인 정보 -->
         <div class="section-block">
@@ -76,24 +76,17 @@ body{background:#edf2f7;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-s
         <div class="section-block">
           <div class="section-heading"><span class="sec-num">2</span> 신청 내용</div>
           <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">지원 항목 <span class="text-danger">*</span></label>
-              <input type="text" name="item_name" class="form-control" placeholder="예: 개인연금, 퇴직연금 등" value="{{ data.item_name if data.item_name else '' }}" required>
+            <div class="col-md-5">
+              <label class="form-label">대상자 성명</label>
+              <input type="text" name="target_name" class="form-control" value="{{ data.target_name if data.target_name else '본인' }}" readonly>
+              <small class="text-muted mt-1 d-block">※ 본인만 신청 가능합니다.</small>
             </div>
-            <div class="col-md-6">
-              <label class="form-label">금융기관 <span class="text-danger">*</span></label>
-              <input type="text" name="bank_name" class="form-control" placeholder="예: KB국민은행, 삼성생명 등" value="{{ data.bank_name if data.bank_name else '' }}" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">본인 부담금 <span class="text-danger">*</span></label>
-              <div class="input-group">
-                <span class="input-group-text">₩</span>
-                <input type="text" name="self_pay" id="selfPayDisp" class="form-control text-end" placeholder="0" inputmode="numeric" value="{{ data.self_pay if data.self_pay else '' }}" oninput="const r=this.value.replace(/[^0-9]/g,'');this.value=r?parseInt(r).toLocaleString('ko-KR'):'';" required>
-                <span class="input-group-text">원</span>
-              </div>
+            <div class="col-md-7">
+              <label class="form-label">접종 항목 <span class="text-danger">*</span></label>
+              <input type="text" name="detail_text" class="form-control" placeholder="예: 독감 예방접종" value="{{ data.detail_text if data.detail_text else (data.세부내용 if data.세부내용 else '') }}" required>
             </div>
             <div class="col-12">
-              <label class="form-label">신청 금액 <span class="text-danger">*</span></label>
+              <label class="form-label">신청 금액 <span class="text-danger">*</span> <small class="text-muted fw-normal">(연간 15만원 한도)</small></label>
               <div class="input-group">
                 <span class="input-group-text">₩</span>
                 <input type="text" id="amtDisp" class="form-control amount-field" placeholder="0" inputmode="numeric" required>
@@ -112,14 +105,14 @@ body{background:#edf2f7;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-s
               <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle"></i> 은행 선택 → 계좌번호 입력 → 예금주 입력</small>
             </div>
             <div class="col-12">
-              <label class="form-label">증빙서류 첨부 <small class="text-muted">(납입증명서, 통장사본 등)</small></label>
+              <label class="form-label">증빙서류 첨부 <small class="text-muted">(접종 항목과 금액이 명시된 병원 영수증 또는 진료비세부내역서)</small></label>
               <input type="file" name="attachment" class="form-control">
               {% if data and data.첨부파일 %}
               <div class="mt-2 small text-muted">기존 파일: <span class="fw-bold text-primary">{{ data.첨부파일 }}</span></div>
               {% endif %}
             </div>
             <div class="col-12">
-              <div class="info-callout"><i class="bi bi-info-circle-fill me-1"></i> 연금 가입 증명 및 본인 부담 납입을 증빙할 수 있는 서류를 첨부해 주세요.</div>
+              <div class="info-callout"><i class="bi bi-info-circle-fill me-1"></i> 접종 항목과 금액이 명시된 병원 영수증 또는 진료비세부내역서를 첨부해 주세요. (연간 15만원 한도)</div>
             </div>
           </div>
         </div>
@@ -200,17 +193,8 @@ function initAmt(){
   });
 }
 
-window.addEventListener('DOMContentLoaded',()=>{
-  initBankSelect();
-  loadAcct('{{ (data.account or data.계좌번호 or "")|e }}');
-  initAmt();
-  const sp=document.getElementById('selfPayDisp');
-  if(sp&&sp.value){const r=sp.value.replace(/[^0-9]/g,'');sp.value=r?parseInt(r).toLocaleString('ko-KR'):'';}
-});
-document.getElementById('pensionForm').addEventListener('submit',async(e)=>{
-  e.preventDefault();
-  const fd=new FormData(e.target);
-  fd.set('self_pay',document.getElementById('selfPayDisp').value.replace(/,/g,''));
+async function doSubmit(formEl){
+  const fd=new FormData(formEl);
   try{
     const res=await fetch('/submit',{method:'POST',body:fd});
     if(!res.ok)throw new Error(`서버 오류(${res.status})`);
@@ -218,6 +202,16 @@ document.getElementById('pensionForm').addEventListener('submit',async(e)=>{
     if(r.status==='success'){alert(r.message||'신청이 완료되었습니다.');window.location.href='/my_status';}
     else alert('오류: '+r.message);
   }catch(err){alert('제출 오류: '+err.message);}
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  initBankSelect();
+  loadAcct('{{ (data.account or data.계좌번호 or "")|e }}');
+  initAmt();
+});
+document.getElementById('vaccinationForm').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  await doSubmit(e.target);
 });
 </script>
 </body>

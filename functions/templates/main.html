@@ -6,280 +6,675 @@
     <title>LOFA 사내근로복지기금 시스템</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Malgun Gothic', sans-serif; }
-        .navbar { background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .welcome-section { background: linear-gradient(135deg, #0056b3 0%, #003d82 100%); color: white; padding: 40px 0; margin-bottom: 30px; border-radius: 0 0 30px 30px; }
-        .limit-dashboard { 
-            background: white; border-radius: 20px; padding: 25px; margin-top: -50px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #f0f4f8;
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            color: #1a1a2e;
+            min-height: 100vh;
         }
-        .limit-title { font-weight: bold; color: #333; font-size: 1.1rem; }
-        .limit-amount { font-size: 1.5rem; font-weight: 800; color: #0056b3; }
-        .limit-progress { height: 12px; border-radius: 10px; background-color: #e9ecef; margin: 15px 0; }
-        .progress-bar-shared { background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%); }
-        
-        .menu-card { 
-            background: white; border: 1px solid #e0e0e0; border-radius: 15px; transition: all 0.3s; 
-            cursor: pointer; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative;
+
+        /* ── Navbar ── */
+        .top-nav {
+            background: rgba(10, 22, 40, 0.97);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 13px 0;
+        }
+        .nav-brand {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff !important;
+            letter-spacing: -0.2px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .brand-hex {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #1e90ff, #0056b3);
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .brand-accent { color: #4da6ff; }
+        .nav-user-pill {
+            background: rgba(255,255,255,0.09);
+            border: 1px solid rgba(255,255,255,0.13);
+            border-radius: 30px;
+            padding: 5px 15px;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.83rem;
+            font-weight: 500;
+        }
+        .btn-nav-primary {
+            background: linear-gradient(135deg, #1e90ff, #0056b3);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            padding: 7px 18px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-nav-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(30,144,255,0.45);
+            color: #fff;
+        }
+        .btn-nav-ghost {
+            background: transparent;
+            color: rgba(255,255,255,0.55);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 25px;
+            padding: 6px 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-nav-ghost:hover {
+            color: rgba(255,255,255,0.85);
+            border-color: rgba(255,255,255,0.35);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(135deg, #09162a 0%, #0d2347 50%, #1a4a8a 100%);
+            padding: 64px 0 110px;
+            position: relative;
             overflow: hidden;
         }
-        .menu-card:hover { 
-            transform: translateY(-10px); 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
-            border-color: #0056b3; 
+        .hero-glow-a {
+            position: absolute;
+            top: -80px; right: -60px;
+            width: 520px; height: 520px;
+            background: radial-gradient(circle, rgba(30,144,255,0.18) 0%, transparent 65%);
+            border-radius: 50%;
         }
-        .shared-limit-badge {
-            background-color: #e7f1ff; color: #0056b3; font-size: 0.7rem; font-weight: bold;
-            padding: 2px 8px; border-radius: 10px; margin-bottom: 8px; display: inline-block;
+        .hero-glow-b {
+            position: absolute;
+            bottom: -100px; left: -40px;
+            width: 360px; height: 360px;
+            background: radial-gradient(circle, rgba(0,212,170,0.1) 0%, transparent 65%);
+            border-radius: 50%;
         }
-        .monthly-limit-badge {
-            font-size: 0.75rem; color: #555; margin-top: 12px; padding: 8px; 
-            background: #fdfdfd; border: 1px solid #eee; border-radius: 10px; display: inline-block; width: 100%;
-            line-height: 1.5;
+        .hero-grid-lines {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
         }
-        .usage-label { color: #888; font-size: 0.7rem; }
-        .usage-value { font-weight: bold; color: #0056b3; }
-        .icon-box { font-size: 2.5rem; color: #0056b3; margin-bottom: 10px; }
-        .card-title { font-weight: bold; font-size: 1.1rem; color: #333; }
-        .card-text { font-size: 0.85rem; color: #666; }
-        .status-btn { border-radius: 30px; padding: 10px 25px; font-weight: bold; background-color: #fff; color: #0056b3; border: 1px solid #fff;}
-        .status-btn:hover { background-color: #f0f0f0; }
-        .navbar-brand { color: #0056b3 !important; }
-        .logout-btn { border-color: #0056b3; color: #0056b3; }
-        .logout-btn:hover { background-color: #0056b3; color: #fff; }
+        .hero-content { position: relative; z-index: 2; text-align: center; }
+        .hero-year-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(30,144,255,0.18);
+            border: 1px solid rgba(30,144,255,0.35);
+            color: #5bb8ff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            padding: 5px 16px;
+            border-radius: 20px;
+            margin-bottom: 22px;
+        }
+        .hero-title {
+            font-size: clamp(1.7rem, 4vw, 2.4rem);
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1.2;
+            margin-bottom: 14px;
+        }
+        .hero-sub {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.97rem;
+            font-weight: 400;
+        }
+
+        /* ── Dashboard ── */
+        .dash-wrap { margin-top: -64px; position: relative; z-index: 10; }
+        .dash-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 30px 34px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.11), 0 4px 18px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .dash-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+        .dash-kicker {
+            font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+            color: #1e90ff; text-transform: uppercase; margin-bottom: 6px;
+        }
+        .dash-big-num {
+            font-size: 1.9rem; font-weight: 900; color: #1a1a2e; letter-spacing: -1.5px;
+            line-height: 1;
+        }
+        .dash-big-num small {
+            font-size: 0.85rem; font-weight: 500; color: #9aa5b4; letter-spacing: 0;
+        }
+        .dash-stats { display: flex; align-items: center; gap: 28px; }
+        .dash-stat-item { text-align: right; }
+        .dash-stat-label { font-size: 0.68rem; font-weight: 600; color: #9aa5b4; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .dash-stat-val { font-size: 1.05rem; font-weight: 800; color: #1e90ff; letter-spacing: -0.5px; }
+        .dash-stat-val.neutral { color: #1a1a2e; }
+        .dash-divider-v { width: 1px; height: 40px; background: #eef2f8; flex-shrink: 0; }
+        .progress-track {
+            height: 7px; background: #eef2f8; border-radius: 10px;
+            overflow: hidden; margin: 22px 0 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1e90ff 0%, #00c6ff 100%);
+            border-radius: 10px;
+            position: relative;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-meta {
+            display: flex; justify-content: space-between;
+            font-size: 0.72rem; color: #9aa5b4;
+        }
+        .pct-highlight { color: #1e90ff; font-weight: 700; }
+        .scope-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #f0f7ff; color: #1e90ff;
+            font-size: 0.68rem; font-weight: 600;
+            padding: 3px 10px; border-radius: 20px;
+            border: 1px solid rgba(30,144,255,0.14);
+        }
+
+        /* ── Section Header ── */
+        .section-hd { padding: 52px 0 22px; }
+        .section-eyebrow {
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 2.5px;
+            color: #1e90ff; text-transform: uppercase; margin-bottom: 6px;
+        }
+        .section-title-main { font-size: 1.45rem; font-weight: 800; color: #1a1a2e; letter-spacing: -0.5px; }
+
+        /* ── Service Grid ── */
+        .svc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        @media (max-width: 1199px) { .svc-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 767px)  { .svc-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .svc-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 22px 18px;
+            cursor: pointer;
+            transition: transform 0.22s cubic-bezier(0.4,0,0.2,1),
+                        box-shadow 0.22s cubic-bezier(0.4,0,0.2,1),
+                        border-color 0.22s;
+            border: 1.5px solid #eef2f8;
+            position: relative;
+            overflow: hidden;
+        }
+        .svc-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--accent-grad, linear-gradient(90deg, #1e90ff, #00c6ff));
+            opacity: 0;
+            transition: opacity 0.22s;
+        }
+        .svc-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 44px rgba(0,0,0,0.1);
+            border-color: rgba(30,144,255,0.18);
+        }
+        .svc-card:hover::after { opacity: 1; }
+
+        /* accent colors per card */
+        .ac-blue   { --accent-grad: linear-gradient(90deg, #1e90ff, #00c6ff); }
+        .ac-green  { --accent-grad: linear-gradient(90deg, #00c6aa, #00e5c6); }
+        .ac-orange { --accent-grad: linear-gradient(90deg, #f0801a, #ffa64d); }
+        .ac-purple { --accent-grad: linear-gradient(90deg, #7c4dff, #b388ff); }
+        .ac-pink   { --accent-grad: linear-gradient(90deg, #e91e8c, #ff80c8); }
+        .ac-teal   { --accent-grad: linear-gradient(90deg, #00a8c8, #00d4f0); }
+        .ac-red    { --accent-grad: linear-gradient(90deg, #e53935, #ff8a80); }
+        .ac-indigo { --accent-grad: linear-gradient(90deg, #3d5afe, #82b1ff); }
+        .ac-amber  { --accent-grad: linear-gradient(90deg, #f5a623, #ffd980); }
+
+        .svc-icon {
+            width: 46px; height: 46px;
+            border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 13px;
+            flex-shrink: 0;
+        }
+        .ic-blue   { background: #e8f4ff; color: #1e90ff; }
+        .ic-green  { background: #e6faf6; color: #00c6aa; }
+        .ic-orange { background: #fff5e6; color: #f0801a; }
+        .ic-purple { background: #f3eeff; color: #7c4dff; }
+        .ic-pink   { background: #fff0f6; color: #e91e8c; }
+        .ic-teal   { background: #e6f7f9; color: #00a8c8; }
+        .ic-red    { background: #fff0f0; color: #e53935; }
+        .ic-indigo { background: #eeefff; color: #3d5afe; }
+        .ic-amber  { background: #fffae6; color: #f5a623; }
+
+        .svc-badge {
+            display: inline-block;
+            font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2px;
+            padding: 2px 8px; border-radius: 20px;
+            background: #e8f4ff; color: #1e90ff;
+            border: 1px solid rgba(30,144,255,0.15);
+            margin-bottom: 7px;
+        }
+        .svc-name { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+        .svc-desc { font-size: 0.75rem; color: #8a96a8; margin-bottom: 14px; line-height: 1.4; }
+        .svc-stat-box {
+            background: #f8faff; border-radius: 10px;
+            padding: 9px 11px; border: 1px solid #eef2f8;
+        }
+        .svc-stat-row { display: flex; justify-content: space-between; align-items: center; }
+        .svc-stat-lbl { font-size: 0.66rem; color: #9aa5b4; font-weight: 500; }
+        .svc-stat-val { font-size: 0.78rem; font-weight: 700; color: #1e90ff; }
+        .svc-stat-limit { font-size: 0.67rem; color: #c5cdd8; margin-top: 3px; font-weight: 500; }
+
+        /* ── CTA Button ── */
+        .btn-cta {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: linear-gradient(135deg, #1e90ff, #0056b3);
+            color: #fff; border: none; border-radius: 50px;
+            padding: 16px 50px; font-size: 1rem; font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 8px 28px rgba(30,144,255,0.32);
+            transition: all 0.25s;
+        }
+        .btn-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 40px rgba(30,144,255,0.48);
+            color: #fff;
+        }
+
+        /* ── Info Cards ── */
+        .info-card {
+            background: #fff;
+            border-radius: 20px; padding: 28px;
+            height: 100%;
+            border: 1.5px solid #eef2f8;
+        }
+        .info-card-hd {
+            font-size: 0.95rem; font-weight: 700; color: #1a1a2e;
+            margin-bottom: 14px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .notice-body {
+            font-size: 0.87rem; color: #5a6478;
+            line-height: 1.75; white-space: pre-wrap;
+        }
+        .btn-rules {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            background: linear-gradient(135deg, #0a1628, #1a4a8a);
+            color: #fff; border: none; border-radius: 12px;
+            padding: 13px 20px; font-size: 0.88rem; font-weight: 600;
+            width: 100%; margin-top: 10px; transition: all 0.2s;
+            cursor: pointer;
+        }
+        .btn-rules:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(10,22,40,0.28);
+            color: #fff;
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: #0a1628;
+            color: rgba(255,255,255,0.3);
+            font-size: 0.78rem; padding: 24px 0;
+            text-align: center; margin-top: 80px;
+        }
+
+        /* ── Modal ── */
+        .modal-content {
+            border-radius: 22px; border: none;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.2);
+        }
+        .modal-header { border-bottom: 1px solid #f0f4f8; padding: 24px 28px; }
+        .modal-title  { font-weight: 800; color: #1a1a2e; }
+        .modal-body   { padding: 24px 28px; }
+        .modal-footer { border-top: 1px solid #f0f4f8; padding: 16px 28px; }
+
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(22px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .au  { animation: fadeUp 0.5s ease both; }
+        .d1  { animation-delay: 0.08s; }
+        .d2  { animation-delay: 0.16s; }
+        .d3  { animation-delay: 0.24s; }
     </style>
 </head>
 <body>
 
-<nav class="navbar sticky-top">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="/">
-            <i class="bi bi-bank2"></i> LOFA 복지기금
+<!-- ── Navigation ── -->
+<nav class="top-nav">
+    <div class="container d-flex align-items-center justify-content-between">
+        <a class="nav-brand" href="/">
+            <div class="brand-hex"><i class="bi bi-hexagon-fill" style="font-size:.6rem;"></i></div>
+            LOFA <span class="brand-accent ms-1">복지기금</span>
         </a>
-        <div class="d-flex align-items-center">
-            <span class="me-3 fw-bold">{{ user_name }}님</span>
-            <a href="/logout" class="btn btn-sm logout-btn">
-                <i class="bi bi-box-arrow-right"></i> 로그아웃
+        <div class="d-flex align-items-center gap-2">
+            <span class="nav-user-pill d-none d-sm-inline-flex align-items-center gap-1">
+                <i class="bi bi-person-circle"></i> {{ user_name }}님
+            </span>
+            <a href="/my_status" class="btn-nav-primary">
+                <i class="bi bi-list-check me-1"></i>내 신청 현황
             </a>
+            <a href="/logout" class="btn-nav-ghost">로그아웃</a>
         </div>
     </div>
 </nav>
 
-<div class="welcome-section text-center">
-    <div class="container">
-        <h2 class="fw-bold">한국지방재정공제회 사내복지기금 신청</h2>
-        <p class="mb-5">원하시는 복지 항목을 선택하여 신청서를 작성해 주세요.</p>
+<!-- ── Hero ── -->
+<section class="hero">
+    <div class="hero-grid-lines"></div>
+    <div class="hero-glow-a"></div>
+    <div class="hero-glow-b"></div>
+    <div class="container hero-content">
+        <div class="hero-year-badge au">
+            <i class="bi bi-stars"></i> 2026 복지기금 시스템
+        </div>
+        <h1 class="hero-title au d1">
+            한국지방재정공제회<br>사내근로복지기금
+        </h1>
+        <p class="hero-sub au d2">원하시는 복지 항목을 선택하여 신청서를 작성해 주세요</p>
     </div>
-</div>
+</section>
 
-<div class="container mb-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="limit-dashboard">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="limit-title mb-1"><i class="bi bi-shield-check text-primary"></i> 주택·의료·연금 통합 한도 현황</div>
-                        <div class="small text-muted">올해 잔여 한도: <span class="fw-bold text-dark">{{ "{:,.0f}".format(total_limit - used_amount) }}원</span> / 4,800,000원</div>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <div class="limit-amount">{{ "{:,.0f}".format(used_amount) }}원 <small class="text-muted" style="font-size: 0.9rem; font-weight: normal;">승인된 금액</small></div>
-                    </div>
-                </div>
-                <div class="progress limit-progress">
-                    <div class="progress-bar progress-bar-shared" role="progressbar" 
-                         style="width: {{ (used_amount / total_limit * 100)|round|int }}%;" 
-                         aria-valuenow="{{ used_amount }}" aria-valuemin="0" aria-valuemax="{{ total_limit }}">
-                    </div>
-                </div>
-                <div class="d-flex justify-content-between small text-muted">
-                    <span>사용률 {{ (used_amount / total_limit * 100)|round(1) }}%</span>
-                    <span>해당 항목: 주택지원, 의료비지원, 복지연금</span>
+<!-- ── Dashboard ── -->
+<div class="container dash-wrap">
+    <div class="dash-card au d3">
+        <div class="dash-top">
+            <div>
+                <div class="dash-kicker"><i class="bi bi-shield-check me-1"></i>통합 한도 현황 · 주택 · 의료 · 연금</div>
+                <div class="dash-big-num">
+                    {{ "{:,.0f}".format(used_amount) }}<small>원 사용</small>
                 </div>
             </div>
+            <div class="dash-stats">
+                <div class="dash-stat-item">
+                    <div class="dash-stat-label">잔여 한도</div>
+                    <div class="dash-stat-val">{{ "{:,.0f}".format(total_limit - used_amount) }}원</div>
+                </div>
+                <div class="dash-divider-v d-none d-md-block"></div>
+                <div class="dash-stat-item">
+                    <div class="dash-stat-label">연간 한도</div>
+                    <div class="dash-stat-val neutral">4,800,000원</div>
+                </div>
+            </div>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" style="width: {{ (used_amount / total_limit * 100)|round|int }}%;"></div>
+        </div>
+        <div class="progress-meta">
+            <span>사용률 <span class="pct-highlight">{{ (used_amount / total_limit * 100)|round(1) }}%</span></span>
+            <span class="scope-tag"><i class="bi bi-info-circle"></i> 주택지원 · 의료비지원 · 복지연금 포함</span>
         </div>
     </div>
 </div>
 
+<!-- ── Services ── -->
 <div class="container pb-5">
-    <div class="row mb-3">
-        <div class="col-12 text-center">
-            <h4 class="fw-bold"><i class="bi bi-grid-fill text-primary me-2"></i>복지 항목 선택</h4>
-            <p class="text-muted small">항목별 한도 금액을 확인 후 신청해 주세요.</p>
-        </div>
+    <div class="section-hd">
+        <div class="section-eyebrow">Welfare Services</div>
+        <div class="section-title-main">복지 항목 선택</div>
     </div>
-    <div class="row g-4">
-        <!-- 1. 주택지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center border-primary shadow-sm" onclick="location.href='/apply/housing'">
-                <div class="shared-limit-badge">통합한도 대상</div>
-                <div class="icon-box"><i class="bi bi-house-door"></i></div>
-                <h5 class="card-title">주택지원</h5>
-                <p class="card-text">구입비용 이자 지원</p>
-            </div>
-        </div>
 
-        <!-- 2. 복지연금 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center border-primary shadow-sm" onclick="location.href='/apply/pension'">
-                <div class="shared-limit-badge">통합한도 대상</div>
-                <div class="icon-box"><i class="bi bi-piggy-bank"></i></div>
-                <h5 class="card-title">복지연금</h5>
-                <p class="card-text">개인연금 납입금 지원</p>
-            </div>
-        </div>
+    <div class="svc-grid">
 
-        <!-- 3. 의료비지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center border-primary shadow-sm" onclick="location.href='/apply/medical'">
-                <div class="shared-limit-badge">통합한도 대상</div>
-                <div class="icon-box"><i class="bi bi-hospital"></i></div>
-                <h5 class="card-title">의료비지원</h5>
-                <p class="card-text">본인 및 가족 의료비</p>
-            </div>
-        </div>
-
-        <!-- 4. 경조비지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/congratulation'">
-                <div class="icon-box"><i class="bi bi-envelope-heart"></i></div>
-                <h5 class="card-title">경조비지원</h5>
-                <p class="card-text">결혼, 출산, 회갑 등</p>
-                <div class="monthly-limit-badge text-start">
-                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
-                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('경조비지원', 0)) }}원</span></div>
+        <!-- 주택지원 -->
+        <div class="svc-card ac-blue" onclick="location.href='/apply/housing'">
+            <div class="svc-icon ic-blue"><i class="bi bi-house-door-fill"></i></div>
+            <div class="svc-badge">통합한도 대상</div>
+            <div class="svc-name">주택지원</div>
+            <div class="svc-desc">구입비용 이자 지원</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(yearly_usage.get('주택지원', 0)) }}원</span>
                 </div>
             </div>
         </div>
 
-        <!-- 5. 생활복지지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/life_welfare'">
-                <div class="icon-box"><i class="bi bi-gift"></i></div>
-                <h5 class="card-title">생활복지지원</h5>
-                <p class="card-text">학원 수강료 등 복지</p>
-                <div class="monthly-limit-badge text-start">
-                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
-                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('생활복지지원', 0)) }}원</span></div>
+        <!-- 복지연금 -->
+        <div class="svc-card ac-blue" onclick="location.href='/apply/pension'">
+            <div class="svc-icon ic-blue"><i class="bi bi-piggy-bank-fill"></i></div>
+            <div class="svc-badge">통합한도 대상</div>
+            <div class="svc-name">복지연금</div>
+            <div class="svc-desc">개인연금 납입금 지원</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(yearly_usage.get('복지연금', 0)) }}원</span>
                 </div>
             </div>
         </div>
 
-        <!-- 6. 장학금지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/scholarship'">
-                <div class="icon-box"><i class="bi bi-mortarboard"></i></div>
-                <h5 class="card-title">장학금지원</h5>
-                <p class="card-text">자녀 학자금 및 등록금</p>
-                <div class="monthly-limit-badge text-start">
-                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
-                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('장학금지원', 0)) }}원</span></div>
+        <!-- 의료비지원 -->
+        <div class="svc-card ac-blue" onclick="location.href='/apply/medical'">
+            <div class="svc-icon ic-blue"><i class="bi bi-hospital-fill"></i></div>
+            <div class="svc-badge">통합한도 대상</div>
+            <div class="svc-name">의료비지원</div>
+            <div class="svc-desc">본인 및 가족 의료비</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(yearly_usage.get('의료비지원', 0)) }}원</span>
                 </div>
             </div>
         </div>
 
-        <!-- 7. 선진산업시찰 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/inspection'">
-                <div class="icon-box"><i class="bi bi-airplane"></i></div>
-                <h5 class="card-title">선진산업시찰</h5>
-                <p class="card-text">산업시찰 경비 지원</p>
-                <div class="monthly-limit-badge text-start">
-                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
-                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('선진산업시찰', 0)) }}원</span></div>
+        <!-- 생활복지지원 -->
+        <div class="svc-card ac-green" onclick="location.href='/apply/life_welfare'">
+            <div class="svc-icon ic-green"><i class="bi bi-gift-fill"></i></div>
+            <div class="svc-name">생활복지지원</div>
+            <div class="svc-desc">학원 수강료 등 복지</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(monthly_usage.get('생활복지지원', 0)) }}원</span>
                 </div>
+                <div class="svc-stat-limit">한도: 월 10만원 · 연 120만원</div>
             </div>
         </div>
 
-        <!-- 8. 모성보호지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/maternity'">
-                <div class="icon-box"><i class="bi bi-gender-female"></i></div>
-                <h5 class="card-title">모성보호지원</h5>
-                <p class="card-text">임신 및 난임치료비</p>
-                <div class="monthly-limit-badge text-start">
-                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
-                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('모성보호지원', 0)) }}원</span></div>
+        <!-- 문화활동비 -->
+        <div class="svc-card ac-purple" onclick="location.href='/apply/cultural_activity'">
+            <div class="svc-icon ic-purple"><i class="bi bi-ticket-perforated-fill"></i></div>
+            <div class="svc-name">문화활동비</div>
+            <div class="svc-desc">공연, 영화, 전시 등 지원</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(cultural_usage) }}원</span>
                 </div>
+                <div class="svc-stat-limit">한도: 반기 30만원 · 연 60만원</div>
             </div>
         </div>
 
-        <!-- 9. 다자녀가정지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/multichild'">
-                <div class="icon-box"><i class="bi bi-people"></i></div>
-                <h5 class="card-title">다자녀가정지원</h5>
-                <p class="card-text">미취학 자녀 양육비</p>
-                <div class="monthly-limit-badge text-start">
-                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
-                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('다자녀가정지원', 0)) }}원</span></div>
+        <!-- 대부신청 -->
+        <div class="svc-card ac-orange" onclick="location.href='/apply/loan'">
+            <div class="svc-icon ic-orange"><i class="bi bi-cash-coin"></i></div>
+            <div class="svc-name">대부신청</div>
+            <div class="svc-desc">주택자금 및 생활안정 대부</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(yearly_usage.get('대부신청', 0)) }}원</span>
                 </div>
+                <div class="svc-stat-limit">기금운영규정 및 대부계획</div>
             </div>
         </div>
 
-        <!-- 10. 위로금지원 -->
-        <div class="col-6 col-md-4 col-lg-3">
-            <div class="card menu-card p-3 text-center" onclick="location.href='/apply/solace'">
-                <div class="icon-box"><i class="bi bi-heart-pulse"></i></div>
-                <h5 class="card-title">위로금지원</h5>
-                <p class="card-text">질병 및 장애 위로금</p>
-                <div class="monthly-limit-badge text-start">
-                    <div><span class="usage-label">한도금액:</span> <span class="fw-bold">100,000원</span></div>
-                    <div><span class="usage-label">승인된 금액:</span> <span class="usage-value">{{ "{:,.0f}".format(monthly_usage.get('위로금지원', 0)) }}원</span></div>
+        <!-- 경조비지원 -->
+        <div class="svc-card ac-pink" onclick="location.href='/apply/congratulation'">
+            <div class="svc-icon ic-pink"><i class="bi bi-balloon-heart-fill"></i></div>
+            <div class="svc-name">경조비지원</div>
+            <div class="svc-desc">결혼, 조의 등 경조사 지원</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(yearly_usage.get('경조비지원', 0)) }}원</span>
                 </div>
+                <div class="svc-stat-limit">기금운영규정(지급기준표)</div>
+            </div>
+        </div>
+
+        <!-- 정기예방접종 -->
+        <div class="svc-card ac-teal" onclick="location.href='/apply/vaccination'">
+            <div class="svc-icon ic-teal"><i class="bi bi-capsule-pill"></i></div>
+            <div class="svc-name">정기예방접종</div>
+            <div class="svc-desc">독감, 대상포진 등 지원</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(vaccine_usage) }}원</span>
+                </div>
+                <div class="svc-stat-limit">한도: 연 15만원</div>
+            </div>
+        </div>
+
+        <!-- 장학금지원 -->
+        <div class="svc-card ac-indigo" onclick="location.href='/apply/scholarship'">
+            <div class="svc-icon ic-indigo"><i class="bi bi-mortarboard-fill"></i></div>
+            <div class="svc-name">장학금지원</div>
+            <div class="svc-desc">자녀 학자금 및 등록금</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(monthly_usage.get('장학금지원', 0)) }}원</span>
+                </div>
+                <div class="svc-stat-limit">한도: 학기당 250만원</div>
+            </div>
+        </div>
+
+        <!-- 다자녀가정지원 -->
+        <div class="svc-card ac-green" onclick="location.href='/apply/multichild'">
+            <div class="svc-icon ic-green"><i class="bi bi-people-fill"></i></div>
+            <div class="svc-name">다자녀가정지원</div>
+            <div class="svc-desc">미취학 자녀 양육비</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(monthly_usage.get('다자녀가정지원', 0)) }}원</span>
+                </div>
+                <div class="svc-stat-limit">1인 20만 · 2인 50만 · 3인 70만원/연</div>
+            </div>
+        </div>
+
+        <!-- 선진산업시찰 -->
+        <div class="svc-card ac-amber" onclick="location.href='/apply/inspection'">
+            <div class="svc-icon ic-amber"><i class="bi bi-airplane-fill"></i></div>
+            <div class="svc-name">선진산업시찰</div>
+            <div class="svc-desc">산업시찰 경비 지원</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(monthly_usage.get('선진산업시찰', 0)) }}원</span>
+                </div>
+                <div class="svc-stat-limit">한도: 500만원</div>
+            </div>
+        </div>
+
+        <!-- 모성보호지원 -->
+        <div class="svc-card ac-pink" onclick="location.href='/apply/maternity'">
+            <div class="svc-icon ic-pink"><i class="bi bi-heart-pulse-fill"></i></div>
+            <div class="svc-name">모성보호지원</div>
+            <div class="svc-desc">임신 및 난임치료비</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(monthly_usage.get('모성보호지원', 0)) }}원</span>
+                </div>
+                <div class="svc-stat-limit">한도: 200만원</div>
+            </div>
+        </div>
+
+        <!-- 위로금지원 -->
+        <div class="svc-card ac-red" onclick="location.href='/apply/solace'">
+            <div class="svc-icon ic-red"><i class="bi bi-heart-fill"></i></div>
+            <div class="svc-name">위로금지원</div>
+            <div class="svc-desc">질병 및 장애 위로금</div>
+            <div class="svc-stat-box">
+                <div class="svc-stat-row">
+                    <span class="svc-stat-lbl">올해 승인 금액</span>
+                    <span class="svc-stat-val">{{ "{:,.0f}".format(monthly_usage.get('위로금지원', 0)) }}원</span>
+                </div>
+                <div class="svc-stat-limit">중증 1회 150만 · 영구장애 매년 50만원</div>
             </div>
         </div>
 
     </div>
-    
-    <div class="text-center mt-5">
-        <a href="/my_status" class="btn btn-outline-primary btn-lg rounded-pill px-5 fw-bold">
-            <i class="bi bi-file-earmark-text"></i> 내 신청 현황 및 결과 보기
+
+    <!-- CTA -->
+    <div class="text-center mt-5 pt-3">
+        <a href="/my_status" class="btn-cta">
+            <i class="bi bi-file-earmark-text-fill"></i>
+            내 신청 현황 및 결과 보기
         </a>
     </div>
 </div>
 
-<div class="container mb-5">
+<!-- ── Info Section ── -->
+<div class="container pb-5">
     <div class="row g-4">
         <div class="col-md-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-megaphone-fill me-2"></i>최근 공지사항</h5>
-                    <div id="notice-content" class="text-muted" style="white-space: pre-wrap; font-size: 0.95rem; min-height: 100px;">
-                        데이터를 불러오는 중...
-                    </div>
+            <div class="info-card">
+                <div class="info-card-hd">
+                    <i class="bi bi-megaphone-fill" style="color:#1e90ff;"></i> 최근 공지사항
                 </div>
+                <div id="notice-content" class="notice-body text-muted">데이터를 불러오는 중...</div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body p-4">
-                    <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-file-earmark-ruled-fill me-2"></i>복지기금 규정 안내</h5>
-                    <p class="text-muted small">신청 전 반드시 규정집을 확인하여 누락되는 서류가 없도록 주의해 주세요.</p>
-                    <button type="button" class="btn btn-outline-secondary w-100 fw-bold py-2 mt-2" data-bs-toggle="modal" data-bs-target="#rulesModal">
-                        규정집 전체 보기
-                    </button>
+            <div class="info-card">
+                <div class="info-card-hd">
+                    <i class="bi bi-file-earmark-ruled-fill" style="color:#5a6478;"></i> 복지기금 규정 안내
                 </div>
+                <p class="notice-body">신청 전 반드시 규정집을 확인하여 누락되는 서류가 없도록 주의해 주세요.</p>
+                <button type="button" class="btn-rules" data-bs-toggle="modal" data-bs-target="#rulesModal">
+                    <i class="bi bi-book-fill"></i> 규정집 전체 보기
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Rules Modal -->
+<!-- ── Rules Modal ── -->
 <div class="modal fade" id="rulesModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="rules-modal-title">LOFA 복지기금 규정집</h5>
+                <h5 class="modal-title" id="rules-modal-title">LOFA 복지기금 규정집</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="rules-content" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6; color: #444; margin-bottom: 20px;">
+                <div id="rules-content" style="white-space:pre-wrap; font-size:0.95rem; line-height:1.6; color:#444; margin-bottom:20px;">
                     데이터를 불러오는 중...
                 </div>
-                <div id="rules-files-list" class="list-group">
-                    <!-- Files will be listed here -->
-                </div>
+                <div id="rules-files-list" class="list-group"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
@@ -288,36 +683,30 @@
     </div>
 </div>
 
-<footer class="text-center py-4 text-muted border-top bg-white">
+<!-- ── Footer ── -->
+<footer>
     <small>© 2026 한국지방재정공제회(LOFA) 인프라팀 복지기금시스템</small>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Fetch and display settings (New logic for versions)
     async function loadSettings() {
         try {
             const res = await fetch('/api/settings');
             const data = await res.json();
-            
-            // 공지사항 반영
             document.getElementById('notice-content').innerText = data.notice || "공지사항이 없습니다.";
-            
-            // 규정집 최신 버전 반영
             if (data.latest_rules) {
                 const rules = data.latest_rules;
                 document.getElementById('rules-modal-title').innerText = `LOFA 복지기금 규정집 (${rules.version_name})`;
                 document.getElementById('rules-content').innerText = rules.content || "상세 내용이 없습니다.";
-                
                 const filesList = document.getElementById('rules-files-list');
                 filesList.innerHTML = '';
-                
                 if (rules.files && rules.files.length > 0) {
                     filesList.innerHTML = '<h6 class="fw-bold mb-2"><i class="bi bi-paperclip"></i> 첨부된 규정 파일</h6>';
                     rules.files.forEach(f => {
                         filesList.innerHTML += `
                             <a href="${f.url}" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                <span><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i> ${f.name}</span>
+                                <span><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>${f.name}</span>
                                 <span class="badge bg-primary rounded-pill">열기</span>
                             </a>`;
                     });
@@ -328,7 +717,6 @@
             document.getElementById('notice-content').innerText = "데이터 로딩 실패";
         }
     }
-
     window.addEventListener('load', loadSettings);
 </script>
 </body>
