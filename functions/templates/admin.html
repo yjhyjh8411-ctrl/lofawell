@@ -53,6 +53,13 @@
         .btn-google { border-radius: 4px; font-weight: 500; font-size: 14px; padding: 8px 24px; }
         .btn-excel { background-color: var(--google-green); color: white; border: none; }
         .btn-excel:hover { background-color: #2D8A46; color: white; }
+
+        /* Employee Management */
+        .emp-table th { background: #F8F9FA; font-weight: 600; font-size: 12px; color: #5F6368; border: 1px solid #DADCE0; white-space: nowrap; }
+        .emp-table td { border: 1px solid #DADCE0; vertical-align: middle; font-size: 13px; }
+        .emp-table tr:hover { background-color: #F8F9FA; }
+        .emp-search { border-radius: 20px; border: 1px solid #DADCE0; padding: 6px 16px; font-size: 13px; width: 240px; }
+        .emp-search:focus { border-color: var(--google-blue); outline: none; }
     </style>
 </head>
 <body>
@@ -147,7 +154,13 @@
                             <tr>
                                 <th style="min-width: 180px;">직원 상세 정보</th>
                                 {% for cat in categories %}
-                                <th style="min-width: 100px;">{{ cat[:2] }}..</th>
+                                <th style="min-width: 100px;">
+                                    {% if cat == '근로자가족문화활동비' %}
+                                        문화활동비
+                                    {% else %}
+                                        {{ cat[:4] }}..
+                                    {% endif %}
+                                </th>
                                 {% endfor %}
                             </tr>
                         </thead>
@@ -204,7 +217,7 @@
             </div>
         </div>
 
-        <!-- 5. 규정집 버전 관리 -->
+        <!-- 5. 규정집 버전 관리 (full width below) -->
         <div class="col-lg-7">
             <div class="matrix-container shadow-sm m-0">
                 <h6 class="fw-bold mb-3"><i class="bi bi-journal-text text-secondary"></i> 규정집 새 버전 등록 및 관리</h6>
@@ -238,7 +251,7 @@
                                     <th>버전</th>
                                     <th>등록일</th>
                                     <th>첨부파일</th>
-                                    <th>보기</th>
+                                    <th>관리</th>
                                 </tr>
                             </thead>
                             <tbody id="version-history-body">
@@ -247,6 +260,38 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. 직원 정보 관리 -->
+    <div class="row g-4 mt-4">
+        <div class="col-12">
+            <div class="matrix-container shadow-sm m-0">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary"></i> 직원 정보 관리</h6>
+                    <input type="text" id="empSearchInput" class="emp-search" placeholder="사번 / 이름 / 부서 검색..." oninput="filterEmpTable()">
+                </div>
+                <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                    <table class="table emp-table mb-0" id="empTable">
+                        <thead style="position: sticky; top: 0; z-index: 1;">
+                            <tr>
+                                <th>사번</th>
+                                <th>이름</th>
+                                <th>부서</th>
+                                <th>직급</th>
+                                <th>입사일</th>
+                                <th>전화번호</th>
+                                <th>이메일</th>
+                                <th style="text-align:center;">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empTableBody">
+                            <tr><td colspan="8" class="text-center text-muted py-4">불러오는 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-2 text-muted small" id="empCount"></div>
             </div>
         </div>
     </div>
@@ -268,6 +313,66 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 직원 정보 수정 모달 -->
+<div class="modal fade" id="editEmpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-person-gear"></i> 직원 정보 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <form id="editEmpForm">
+                    <input type="hidden" id="edit_user_id" name="user_id">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">사번 <span class="text-muted">(변경 불가)</span></label>
+                        <input type="text" id="edit_사번_display" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">이름</label>
+                            <input type="text" name="이름" id="edit_이름" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">직급</label>
+                            <input type="text" name="직급" id="edit_직급" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">부서</label>
+                            <input type="text" name="부서" id="edit_부서" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">입사일</label>
+                            <input type="text" name="입사일" id="edit_입사일" class="form-control" placeholder="예: 2020-03-01">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">전화번호</label>
+                            <input type="text" name="전화번호" id="edit_전화번호" class="form-control" placeholder="010-0000-0000">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">이메일</label>
+                            <input type="email" name="이메일" id="edit_이메일" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold">새 비밀번호 <span class="text-muted">(변경 시에만 입력)</span></label>
+                            <input type="password" name="새비밀번호" id="edit_새비밀번호" class="form-control" placeholder="비워두면 변경하지 않음">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-danger me-auto" onclick="deleteEmployee()">
+                    <i class="bi bi-trash"></i> 삭제
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary fw-bold px-4" onclick="saveEmployee()">
+                    <i class="bi bi-save"></i> 저장
+                </button>
             </div>
         </div>
     </div>
@@ -310,12 +415,30 @@
                     <td class="fw-bold text-primary">${v.version_name}</td>
                     <td>${v.created_at ? v.created_at.slice(2, 16) : '-'}</td>
                     <td>${(v.files || []).length}개</td>
-                    <td><button class="btn btn-xs btn-outline-info py-0" style="font-size: 11px;" onclick="previewVersion('${v.version_id}')">미리보기</button></td>
+                    <td class="d-flex gap-1">
+                        <button class="btn btn-xs btn-outline-info py-0" style="font-size: 11px;" onclick="previewVersion('${v.version_id}')">미리보기</button>
+                        <button class="btn btn-xs btn-outline-danger py-0" style="font-size: 11px;" onclick="deleteRulesVersion('${v.version_id}', '${v.version_name.replace(/'/g, "\\'")}')">삭제</button>
+                    </td>
                 `;
                 historyBody.appendChild(tr);
             });
         } catch (err) { console.error("Settings load error:", err); }
     }
+
+    window.deleteRulesVersion = async (vid, vname) => {
+        if (!confirm(`[${vname}] 규정집 버전을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+        const fd = new FormData();
+        fd.append('version_id', vid);
+        try {
+            const res = await fetch('/admin/rules_version/delete', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (result.status === 'success') {
+                await loadSettings();
+            } else {
+                alert('삭제 오류: ' + (result.message || ''));
+            }
+        } catch (e) { alert('서버 통신 오류'); }
+    };
 
     window.previewVersion = (vid) => {
         const v = window.ruleVersions.find(v => v.version_id === vid);
@@ -418,7 +541,9 @@
                 'user_name': '성명', 'user_id': '사번', 'user_dept': '부서', 'position': '직급',
                 'joinDate': '입사일', 'phone': '연락처', 'amount': '신청금액', 'account': '계좌번호',
                 'target_name': '지원대상/구분', 'item_name': '항목명', 'bank_name': '은행명',
-                'self_pay': '본인부담금', 'detail_text': '상세내역/명세', 'type': '신청유형'
+                'self_pay': '본인부담금', 'detail_text': '상세내역/명세', 'type': '신청유형',
+                'apply_detail': '지원내용', 'target_person': '대상자성명', 'relationship': '신청인과의관계',
+                'event_type': '지원대상경조사', 'event_date': '경조발생일'
             };
             Object.entries(data.raw_data).forEach(([key, val]) => {
                 if (!val || val === 'undefined' || val === 'None') return;
@@ -460,6 +585,125 @@
             row.style.display = text.includes(input) ? "" : "none";
         });
     }
+
+    // --- 직원 정보 관리 ---
+    let allEmployees = [];
+    const editEmpModal = new bootstrap.Modal(document.getElementById('editEmpModal'));
+
+    async function loadEmployees() {
+        try {
+            const res = await fetch('/api/users');
+            const data = await res.json();
+            if (data.status !== 'success') return;
+            allEmployees = data.users;
+            renderEmpTable(allEmployees);
+        } catch (err) { console.error('직원 목록 로드 오류:', err); }
+    }
+
+    function renderEmpTable(employees) {
+        const tbody = document.getElementById('empTableBody');
+        const countEl = document.getElementById('empCount');
+        if (!employees.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">등록된 직원이 없습니다.</td></tr>';
+            countEl.textContent = '';
+            return;
+        }
+        tbody.innerHTML = employees.map(u => `
+            <tr class="emp-row">
+                <td><span class="badge bg-secondary">${u.사번 || '-'}</span></td>
+                <td class="fw-bold">${u.이름 || '-'}</td>
+                <td>${u.부서 || '-'}</td>
+                <td>${u.직급 || '-'}</td>
+                <td>${u.입사일 || '-'}</td>
+                <td>${u.전화번호 || '-'}</td>
+                <td class="text-muted small">${u.이메일 || '-'}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 12px;"
+                            onclick='openEditEmp(${JSON.stringify(u)})'>
+                        <i class="bi bi-pencil"></i> 수정
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+        countEl.textContent = `총 ${employees.length}명`;
+    }
+
+    function filterEmpTable() {
+        const q = document.getElementById('empSearchInput').value.toLowerCase();
+        const filtered = allEmployees.filter(u =>
+            (u.사번 || '').toLowerCase().includes(q) ||
+            (u.이름 || '').toLowerCase().includes(q) ||
+            (u.부서 || '').toLowerCase().includes(q)
+        );
+        renderEmpTable(filtered);
+    }
+
+    function openEditEmp(user) {
+        document.getElementById('edit_user_id').value = user.사번 || '';
+        document.getElementById('edit_사번_display').value = user.사번 || '';
+        document.getElementById('edit_이름').value = user.이름 || '';
+        document.getElementById('edit_직급').value = user.직급 || '';
+        document.getElementById('edit_부서').value = user.부서 || '';
+        document.getElementById('edit_입사일').value = user.입사일 || '';
+        document.getElementById('edit_전화번호').value = user.전화번호 || '';
+        document.getElementById('edit_이메일').value = user.이메일 || '';
+        document.getElementById('edit_새비밀번호').value = '';
+        editEmpModal.show();
+    }
+
+    async function saveEmployee() {
+        const form = document.getElementById('editEmpForm');
+        const fd = new FormData(form);
+        const btn = document.querySelector('#editEmpModal .btn-primary');
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>저장 중...';
+        try {
+            const res = await fetch('/admin/user/update', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (result.status === 'success') {
+                editEmpModal.hide();
+                await loadEmployees();
+                showToast('직원 정보가 저장되었습니다.', 'success');
+            } else {
+                alert('오류: ' + (result.message || '저장 실패'));
+            }
+        } catch (e) { alert('서버 통신 오류'); }
+        finally {
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    }
+
+    async function deleteEmployee() {
+        const userId = document.getElementById('edit_user_id').value;
+        const name = document.getElementById('edit_이름').value;
+        if (!confirm(`[${userId}] ${name} 직원을 정말 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+        const fd = new FormData();
+        fd.append('user_id', userId);
+        try {
+            const res = await fetch('/admin/user/delete', { method: 'POST', body: fd });
+            const result = await res.json();
+            if (result.status === 'success') {
+                editEmpModal.hide();
+                await loadEmployees();
+                showToast(`${name} 직원이 삭제되었습니다.`, 'danger');
+            } else {
+                alert('삭제 오류: ' + (result.message || ''));
+            }
+        } catch (e) { alert('서버 통신 오류'); }
+    }
+
+    function showToast(message, type = 'success') {
+        const toastEl = document.createElement('div');
+        toastEl.className = `alert alert-${type} shadow position-fixed bottom-0 end-0 m-4`;
+        toastEl.style.cssText = 'z-index:9999; min-width:260px; font-size:14px;';
+        toastEl.innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : 'x-circle'}-fill me-2"></i>${message}`;
+        document.body.appendChild(toastEl);
+        setTimeout(() => toastEl.remove(), 3000);
+    }
+
+    window.addEventListener('load', loadEmployees);
 </script>
 </body>
 </html>

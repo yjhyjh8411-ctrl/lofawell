@@ -189,9 +189,21 @@ def main_page():
     shared_categories = ['주택지원', '의료비지원', '복지연금']
     individual_monthly_limit = 100000
     
+    # 신규: 근로자가족문화활동비 반기 한도 (30만원)
+    cultural_limit = 300000
+    cultural_usage = 0
+    current_month_int = int(datetime.now().strftime('%m'))
+    current_half = 1 if current_month_int <= 6 else 2
+
+    # 신규: 정기예방접종 연간 한도 (15만원)
+    vaccine_limit = 150000
+    vaccine_usage = 0
+
     total_shared_approved = 0
     # 카테고리별 이번 달 사용 금액 저장용
     category_monthly_usage = {}
+    # 카테고리별 연간 사용 금액 저장용 (모든 항목 연동을 위해 추가)
+    category_yearly_usage = {}
     
     try:
         # 💡 인덱스 오류 방지를 위해 쿼리를 단순화하고 메모리에서 세부 필터링합니다.
@@ -208,12 +220,29 @@ def main_page():
             
             # 연도 필터링 (메모리)
             if app_date.startswith(current_year):
+                # 모든 항목의 연간 합계 계산
+                category_yearly_usage[app_type] = category_yearly_usage.get(app_type, 0) + amount
+
                 if app_type in shared_categories:
                     total_shared_approved += amount
                 
+                # 정기예방접종 연간 합산
+                if app_type == '정기예방접종':
+                    vaccine_usage += amount
+
                 # 월간 필터링 (메모리)
                 if app_date.startswith(current_month):
                     category_monthly_usage[app_type] = category_monthly_usage.get(app_type, 0) + amount
+
+                # 신규: 반기 필터링 (근로자가족문화활동비)
+                if app_type == '근로자가족문화활동비':
+                    try:
+                        app_month = int(app_date.split('-')[1])
+                        app_half = 1 if app_month <= 6 else 2
+                        if app_half == current_half:
+                            cultural_usage += amount
+                    except:
+                        pass
                 
     except Exception as e:
         print(f"Usage calculation error: {e}")
@@ -223,7 +252,13 @@ def main_page():
                            used_amount=total_shared_approved,
                            total_limit=4800000,
                            monthly_usage=category_monthly_usage,
-                           monthly_limit=individual_monthly_limit)
+                           yearly_usage=category_yearly_usage,
+                           monthly_limit=individual_monthly_limit,
+                           cultural_usage=cultural_usage,
+                           cultural_limit=cultural_limit,
+                           current_half=current_half,
+                           vaccine_usage=vaccine_usage,
+                           vaccine_limit=vaccine_limit)
 
 @app.route('/login', methods=['GET'])
 def login_page():
@@ -236,6 +271,7 @@ def login_page():
     # 2. URL 파라미터를 통한 자동 로그인 시도
     eid = request.args.get('employeeId')
     pw = request.args.get('password')
+    error_msg = None
     
     if eid and pw:
         try:
@@ -253,15 +289,19 @@ def login_page():
                         'user_join_date': u_info.get('입사일', ''),
                         'user_phone': u_info.get('전화번호', '')
                     })
-                    # 관리자 여부에 따라 리다이렉트 경로 결정
                     if eid.strip() == 'admin':
                         return redirect(url_for('admin_dashboard'))
                     return redirect(url_for('main_page'))
+                else:
+                    error_msg = "비밀번호가 일치하지 않습니다."
+            else:
+                error_msg = "등록되지 않은 사번입니다."
         except Exception as e:
             print(f"Auto-login error: {e}")
+            error_msg = "자동 로그인 중 오류가 발생했습니다."
         
     # 3. 파라미터가 없거나 인증 실패 시 로그인 템플릿 반환
-    resp = make_response(render_template('login.html'))
+    resp = make_response(render_template('login.html', error_msg=error_msg))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     return resp
 
@@ -329,7 +369,12 @@ def apply_page(page):
             '전화번호': session.get('user_phone', '')
         }
 
-    return render_template(f'{page}.html', user_name=session['user_name'], edit_mode=edit_mode, data=data)
+    return render_template(f'{page}.html', 
+                           user_name=session['user_name'], 
+                           user_id=session.get('user_id'),
+                           user_dept=session.get('user_dept'),
+                           edit_mode=edit_mode, 
+                           data=data)
 
 # --- [3. 신청서 제출] ---
 @app.route('/submit', methods=['GET', 'POST'])
@@ -466,15 +511,19 @@ def handle_submit():
 @app.route('/my_status')
 def my_status():
     if 'user_id' not in session: return redirect(url_for('index'))
-    
+
     uid = str(session.get('user_id'))
-    print(f"DEBUG: Status query for user_id: {uid}")
-    
+    current_year = datetime.now().year
+    selected_year = request.args.get('year', str(current_year))
+    years = [str(y) for y in range(current_year, current_year - 4, -1)]
+
+    print(f"DEBUG: Status query for user_id: {uid}, year: {selected_year}")
+
     try:
         db = get_db()
         # ASCII 필드명을 사용하여 쿼리
         docs = db.collection('applications').where('user_id', '==', uid).stream()
-        
+
         applications = []
         for doc in docs:
             d = doc.to_dict()
@@ -483,12 +532,16 @@ def my_status():
             if '구분' not in d and 'type' in d: d['구분'] = d['type']
             if '상태' not in d and 'status' in d: d['상태'] = d['status']
             if '신청금액' not in d and 'amount' in d: d['신청금액'] = d['amount']
-            
-            applications.append(d)
-            
+            if '반려의견' not in d and 'reject_reason' in d: d['반려의견'] = d['reject_reason']
+
+            # 연도 필터링
+            app_date = d.get('신청일시', d.get('apply_date', ''))
+            if app_date.startswith(selected_year):
+                applications.append(d)
+
         applications.sort(key=lambda x: x.get('apply_date', x.get('신청일시', '')), reverse=True)
-        return render_template('my_status.html', user_name=session['user_name'], applications=applications)
-        
+        return render_template('my_status.html', user_name=session['user_name'], applications=applications, years=years, selected_year=selected_year)
+
     except Exception as e:
         print(f"DEBUG: Status query fatal error: {e}")
         # Fallback: Fetch all and filter in memory if necessary
@@ -499,9 +552,12 @@ def my_status():
                 d = doc.to_dict()
                 if str(d.get('user_id')) == uid or str(d.get('사번')) == uid:
                     if '신청일시' not in d and 'apply_date' in d: d['신청일시'] = d['apply_date']
-                    applications.append(d)
+                    if '반려의견' not in d and 'reject_reason' in d: d['반려의견'] = d['reject_reason']
+                    app_date = d.get('신청일시', d.get('apply_date', ''))
+                    if app_date.startswith(selected_year):
+                        applications.append(d)
             applications.sort(key=lambda x: x.get('apply_date', x.get('신청일시', '')), reverse=True)
-            return render_template('my_status.html', user_name=session['user_name'], applications=applications)
+            return render_template('my_status.html', user_name=session['user_name'], applications=applications, years=years, selected_year=selected_year)
         except Exception as e2:
             return jsonify({"status": "error", "message": f"데이터 로드 실패: {e}"}), 500
 
@@ -538,7 +594,8 @@ def cancel_apply():
 def admin_dashboard():
     if session.get('user_id') != 'admin': return redirect(url_for('index'))
     
-    cats = ['장학금지원', '경조비지원', '선진산업시찰', '주택지원', '복지연금', '의료비지원', '모성보호지원', '다자녀가정지원', '위로금지원', '생활복지지원']
+    # 신청서 순서: 주택지원, 복지연금, 의료비지원, 생활복지지원, 문화활동비, 대부신청, 경조비지원, 정기예방접종, 장학금지원, 다자녀가정지원, 선진산업시찰, 모성보호지원, 위로금지원
+    cats = ['주택지원', '복지연금', '의료비지원', '생활복지지원', '근로자가족문화활동비', '대부신청', '경조비지원', '정기예방접종', '장학금지원', '다자녀가정지원', '선진산업시찰', '모성보호지원', '위로금지원']
     
     db = get_db()
     docs = db.collection('applications').stream()
@@ -677,6 +734,50 @@ def admin_process():
     except Exception as e:
         print(f"Notification error: {e}")
 
+    return jsonify({"status": "success"})
+
+# --- [직원 정보 관리 API] ---
+@app.route('/api/users')
+def api_users():
+    if session.get('user_id') != 'admin':
+        return jsonify({"status": "error"}), 403
+    db = get_db()
+    users = []
+    for doc in db.collection('users').stream():
+        u = doc.to_dict()
+        u.pop('비밀번호', None)  # 비밀번호는 노출하지 않음
+        users.append(u)
+    users.sort(key=lambda x: x.get('사번', ''))
+    return jsonify({"status": "success", "users": users})
+
+@app.route('/admin/user/update', methods=['POST'])
+def admin_user_update():
+    if session.get('user_id') != 'admin':
+        return jsonify({"status": "error"}), 403
+    user_id = request.form.get('user_id', '').strip()
+    if not user_id:
+        return jsonify({"status": "error", "message": "사번이 필요합니다."})
+    db = get_db()
+    update_data = {}
+    for field in ['이름', '직급', '부서', '이메일', '입사일', '전화번호']:
+        val = request.form.get(field)
+        if val is not None:
+            update_data[field] = val.strip()
+    new_pw = request.form.get('새비밀번호', '').strip()
+    if new_pw:
+        update_data['비밀번호'] = new_pw
+    db.collection('users').document(user_id).update(update_data)
+    return jsonify({"status": "success"})
+
+@app.route('/admin/user/delete', methods=['POST'])
+def admin_user_delete():
+    if session.get('user_id') != 'admin':
+        return jsonify({"status": "error"}), 403
+    user_id = request.form.get('user_id', '').strip()
+    if not user_id:
+        return jsonify({"status": "error", "message": "사번이 필요합니다."})
+    db = get_db()
+    db.collection('users').document(user_id).delete()
     return jsonify({"status": "success"})
 
 # --- [엑셀 다운로드 기능 개선] ---
@@ -858,6 +959,20 @@ def update_settings():
             })
             return jsonify({"status": "success", "message": f"새 버전({v_name})이 등록되었습니다."})
 
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/rules_version/delete', methods=['POST'])
+def delete_rules_version():
+    if session.get('user_id') != 'admin':
+        return jsonify({"status": "error", "message": "권한이 없습니다."}), 403
+    version_id = request.form.get('version_id', '').strip()
+    if not version_id:
+        return jsonify({"status": "error", "message": "version_id가 필요합니다."})
+    try:
+        db = get_db()
+        db.collection('settings').document('site_content').collection('rule_versions').document(version_id).delete()
+        return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
